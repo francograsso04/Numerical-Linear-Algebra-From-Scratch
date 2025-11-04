@@ -1,0 +1,83 @@
+def gen_Q(A, tol=1e-12):
+    n, m = A.shape
+    k = min(n, m)
+    Q = np.zeros((n, k))
+    for i in range(k):
+        v = A[:, i].copy()
+        for j in range(i):
+            inner_product = np.dot(Q[:, j], v)
+            v = v - inner_product * Q[:, j]
+        norm_2 = np.linalg.norm(v)
+        if norm_2 > tol:
+            Q[:, i] = v / norm_2
+        else:
+            Q[:, i] = np.zeros(n)
+
+    return Q
+
+
+def QR_con_GS(A,tol=1e-12,retorna_nops=False):
+    """
+    A una matriz de n x n
+    tol la tolerancia con la que se filtran elementos nulos en R
+    retorna_nops permite (opcionalmente) retornar el numero de operaciones realizado
+    retorna matrices Q y R calculadas con Gram Schmidt (y como tercer argumento opcional, el numero de operaciones).
+    Si la matriz A no es de n x n, debe retornar None
+    """
+    n,m = A.shape
+    if(n!=m):
+      return None
+    Q = gen_Q(A,tol);
+    R = np.zeros((n,n));
+    for i in range(0, n):
+      R[i,i] = np.dot(Q[:, i], A[:, i]);
+      for j in range(0, i):
+        R[j, i] = np.dot(Q[:,j], A[:, i])
+    return Q,R
+
+
+def QR_con_HH(A,tol=1e-12):
+    """
+    A una matriz de m x n (m>=n)
+    tol la tolerancia con la que se filtran elementos nulos en R
+    retorna matrices Q y R calculadas con reflexiones de Householder
+    Si la matriz A no cumple m>=n, debe retornar None
+    """
+    m,n = A.shape
+    if(m < n):
+      return None
+    Q = np.eye(m)
+    R = A.copy()
+    for i in range(0, n - 1):
+      norm_2 = np.linalg.norm(R[i:, i])
+      if(norm_2 < tol):
+        R[i:, i] = 0;
+        continue;
+      aux = np.zeros_like(R[i:, i])
+      aux[0] = norm_2;
+      v =  R[i:, i] - aux;
+      u = v / np.linalg.norm(v);
+      Hi = np.eye(m-i) - (2* np.outer(u,u));
+      Hi = np.block([[np.eye(i), np.zeros((i, m-i))], [np.zeros((m-i, i)), Hi]])
+      R = np.dot(Hi, R);
+      Q = np.dot(Q, Hi.T);
+
+    return Q,R
+
+
+
+
+def calculaQR(A,metodo='RH',tol=1e-12):
+    """
+    A una matriz de n x n
+    tol la tolerancia con la que se filtran elementos nulos en R
+    metodo = ['RH','GS'] usa reflectores de Householder (RH) o Gram Schmidt (GS) para realizar la factorizacion
+    retorna matrices Q y R calculadas con Gram Schmidt (y como tercer argumento opcional, el numero de operaciones)
+    Si el metodo no esta entre las opciones, retorna None
+    """
+    if(metodo == 'RH'):
+      return QR_con_HH(A,tol)
+    elif(metodo == 'GS'):
+      return QR_con_GS(A,tol)
+    else:
+      return None
