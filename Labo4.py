@@ -1,0 +1,121 @@
+def calculaLU(A):
+    """
+    Calcula la factorización LU de la matriz A con unos en la diagonal de L.
+    Retorna (L, U, nops).
+    Si no se puede factorizar, retorna (None, None, 0).
+
+    nops cuenta las multiplicaciones y sumas/restas hechas durante la eliminación.
+    """
+    if A is None:
+      return None, None, 0
+
+    n , m = A.shape
+    if n != m:
+      return None, None, 0
+    L = np.eye(n)
+    U = A.copy()
+    nops = -n  #Esto es porque en el programa cuento como una resta poner el 0 y no lo deberia contar
+
+    for k in range(n-1):
+        pivot = U[k, k]
+        if pivot == 0:
+            return None, None, 0
+        if np.linalg.det(U) == 0: #Esto lo agrego por el de matriz inversa
+            return None, None, 0
+
+
+        for i in range(k+1, n):
+            L[i, k] = U[i, k] / pivot
+            for j in range(k, n):
+                U[i, j] -= L[i, k] * U[k, j]
+                nops += 2
+
+    return L, U, nops
+
+
+
+
+def res_tri(L, b, inferior=True):
+  n = L.shape[0]
+  x = np.zeros(n)
+  if  inferior:
+    for i in range(n):
+      x[i] += b[i] / L[i, i]
+      for j in range(i):
+        x[i] -= (L[i, j] * x[j])/L[i, i]
+  else:
+    for i in range(n-1,-1,-1):
+      x[i] += b[i] / L[i, i]
+      for j in range(n-1,i,-1):
+        x[i] -= (L[i, j] * x[j])/L[i, i]
+
+  return x
+
+def inversa(A):
+  L,U,nops = calculaLU(A)
+  if L is None:
+    return None
+  else:
+    n = A.shape[0]
+    inversa =np.zeros((n, n))
+
+    for i in range(n):
+      b = np.zeros(n)
+      b[i] = 1
+      d = res_tri(L, b, inferior=True)
+      x = res_tri(U, d, inferior=False)
+      inversa[:, i] = x
+
+    return inversa
+
+
+def diagonal_de_matriz(A):
+  x,y = A.shape
+  if x != y:
+    return None
+
+  nueva_matriz = np.zeros((x,y))
+  for i in range(x):
+    for j in range(y):
+      if j == i:
+        nueva_matriz[i,j] = A[i,j]
+  return nueva_matriz
+
+
+
+
+def calculaLDV(A):
+    n = A.shape[0]
+    L,U,nops = calculaLU(A)
+    if L is None:
+      return None,None,None
+    D = np.eye(n)
+    for i in range(n):
+      D[i][i] = U[i][i]
+    for i in range(n):
+      for j in range(n):
+        U[i, j] = U[i,j] / D[i, i]
+    return L,D,U
+
+def esSimetrica(A):
+
+    return matricesIguales(A, A.T)
+
+
+def la_diagonal_es_positiva(A):
+  return np.all(np.diag(A) > 0)
+
+def esSDP(A,atol=1e-8):
+    """
+    Checkea si la matriz A es simétrica definida positiva (SDP) usando
+    la factorización LDV.
+    """
+    L,D,V = calculaLDV(A)
+    iguales = True
+    if L is None:
+        return False
+    for i in range(A.shape[0]):
+      for j in range(A.shape[1]):
+        if not sonIguales(A[i,j], transpuesta(A)[i,j],atol):
+          iguales = False
+    return iguales and la_diagonal_es_positiva(D)
