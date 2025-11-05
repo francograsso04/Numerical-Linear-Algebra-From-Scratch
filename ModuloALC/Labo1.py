@@ -1,3 +1,6 @@
+from imports import np, plt
+
+
 def error(x, y):
     y64 = np.float64(y)   # convertir y a float64
     return abs(x - y64)
@@ -46,6 +49,21 @@ def vector_dot(v, w):
     w = np.array(w)
     suma = sum(v[i] * w[i] for i in range(len(v)))
     return suma
+
+def outer(v, w):
+    """
+    Calcula el producto externo entre dos vectores : 
+    devuelve una matriz donde M[i,j] = v[i] * w[j]
+    """
+    v = np.array(v)
+    w = np.array(w)
+    n = len(v)
+    m = len(w)
+    M = np.zeros((n, m))
+    for i in range(n):
+        for j in range(m):
+            M[i, j] = v[i] * w[j]
+    return M
 
 def transpuesta(A):
     filas, columnas = A.shape

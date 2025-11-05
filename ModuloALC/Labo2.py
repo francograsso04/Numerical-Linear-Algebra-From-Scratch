@@ -1,3 +1,4 @@
+from imports import np, plt
 def rota(theta):
     return np.array([
         [np.cos(theta), -np.sin(theta)],

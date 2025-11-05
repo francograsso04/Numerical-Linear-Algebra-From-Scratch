@@ -1,4 +1,4 @@
-
+from imports import np, plt,lb3,lb1,lb6
 def transiciones_al_azar_continuas(n):
     """
     n: cantidad de filas (columnas) de la matriz de transición.
@@ -7,7 +7,7 @@ def transiciones_al_azar_continuas(n):
     T = np.random.random((n, n))
 
     for j in range(n):
-        T[:, j] = normaliza([T[:, j]], 1)[0]
+        T[:, j] = lb3.normaliza([T[:, j]], 1)[0]
 
     return T
 
@@ -35,7 +35,7 @@ def transiciones_al_azar_uniformes(n,thres):
         if np.sum(col) == 0:
             col[:] = 1.0 / n # Si la columna me queda de 0 lleno todo de 1/n
         else:
-            col = normaliza([col], 1)[0]
+            col = lb3.normaliza([col], 1)[0]
         T[:, j] = col
 
     return T
@@ -48,9 +48,9 @@ def nucleo(A,tol=1e-15):
     Retorna los autovectores en cuestion, como una matriz de n x k, con k el numero de autovectores en el nucleo.
     """
 
-    ATA = matmulti(transpuesta(A),A)
+    ATA = lb1.matmulti(lb1.transpuesta(A),A)
 
-    resultado = diagRH(ATA, tol=tol)
+    resultado = lb6.diagRH(ATA, tol=tol)
     if resultado is None:
         return None
 

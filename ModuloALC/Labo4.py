@@ -1,3 +1,5 @@
+from imports import np, plt,lb1
+
 def calculaLU(A):
     """
     Calcula la factorización LU de la matriz A con unos en la diagonal de L.
@@ -99,7 +101,7 @@ def calculaLDV(A):
 
 def esSimetrica(A):
 
-    return matricesIguales(A, A.T)
+    return lb1.matricesIguales(A, A.T)
 
 
 def la_diagonal_es_positiva(A):
@@ -116,6 +118,6 @@ def esSDP(A,atol=1e-8):
         return False
     for i in range(A.shape[0]):
       for j in range(A.shape[1]):
-        if not sonIguales(A[i,j], transpuesta(A)[i,j],atol):
+        if not lb1.sonIguales(A[i,j], lb1.transpuesta(A)[i,j],atol):
           iguales = False
     return iguales and la_diagonal_es_positiva(D)

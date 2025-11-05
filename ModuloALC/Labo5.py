@@ -1,3 +1,4 @@
+from imports import np, plt,lb1,lb3
 def gen_Q(A, tol=1e-12):
     n, m = A.shape
     k = min(n, m)
@@ -5,9 +6,9 @@ def gen_Q(A, tol=1e-12):
     for i in range(k):
         v = A[:, i].copy()
         for j in range(i):
-            inner_product = np.dot(Q[:, j], v)
+            inner_product = lb1.vector_dot(Q[:, j], v)
             v = v - inner_product * Q[:, j]
-        norm_2 = np.linalg.norm(v)
+        norm_2 = lb3.norma(v,2)
         if norm_2 > tol:
             Q[:, i] = v / norm_2
         else:
@@ -30,9 +31,9 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     Q = gen_Q(A,tol);
     R = np.zeros((n,n));
     for i in range(0, n):
-      R[i,i] = np.dot(Q[:, i], A[:, i]);
+      R[i,i] = lb1.vector_dot(Q[:, i], A[:, i]);
       for j in range(0, i):
-        R[j, i] = np.dot(Q[:,j], A[:, i])
+        R[j, i] = lb1.vector_dot(Q[:,j], A[:, i])
     return Q,R
 
 
@@ -49,15 +50,16 @@ def QR_con_HH(A,tol=1e-12):
     Q = np.eye(m)
     R = A.copy()
     for i in range(0, n - 1):
-      norm_2 = np.linalg.norm(R[i:, i])
+      norm_2 = lb3.norma(R[i:, i],2)
       if(norm_2 < tol):
         R[i:, i] = 0;
         continue;
       aux = np.zeros_like(R[i:, i])
       aux[0] = norm_2;
       v =  R[i:, i] - aux;
-      u = v / np.linalg.norm(v);
-      Hi = np.eye(m-i) - (2* np.outer(u,u));
+      u = v / lb3.norma(v,2);
+      Hi = Hi = np.eye(m - i) - 2 * lb1.outer(u, u)
+
       Hi = np.block([[np.eye(i), np.zeros((i, m-i))], [np.zeros((m-i, i)), Hi]])
       R = np.dot(Hi, R);
       Q = np.dot(Q, Hi.T);
