@@ -31,46 +31,39 @@ def normaMatMC(A, q, p, Np):
   return (max, best_x);
 
 def normaInfinito(unaMatrizANormalizar):
-  normaInf = 0
-  maximo = 0
+  norma = 0
 
   for i in range(unaMatrizANormalizar.shape[0]):
     suma = 0
     for j in range(unaMatrizANormalizar.shape[1]):
       suma += abs(unaMatrizANormalizar[i, j])
-    if suma > maximo:
-      normaInf = suma
-
-  return suma
+    if suma > 0:
+      norma = suma
+  return norma
 
 def norma1(unaMatrizANormalizar):
-  norma1 = 0
-  maximo = 0
+  norma = 0
 
   for j in range(unaMatrizANormalizar.shape[1]):
       suma = 0
       for i in range(unaMatrizANormalizar.shape[0]):
         suma += abs(unaMatrizANormalizar[i, j])
-      if suma > maximo:
-        norma1 = suma
-
-  return suma
+      if suma > 0:
+        norma = suma
+  return norma
 
 
 def normaExacta(unaMatrizANormalizar, p = [1, 'inf']):
-  if p not in [1, 'inf'] and p != [1, 'inf']:
-    return None
 
-  if isinstance(p, list):
+  if p == [1, 'inf']:
     norma_1 = norma1(unaMatrizANormalizar)
-    norma_Inf = normaInfinito(unaMatrizANormalizar)
-    return (norma_1,norma_Inf)
-
+    norma_inf = normaInfinito(unaMatrizANormalizar)
+    return (norma_1,norma_inf)
   elif p == 1:
     return norma1(unaMatrizANormalizar)
-
   elif p == 'inf':
     return normaInfinito(unaMatrizANormalizar)
+  return None
 
 
 def condMC(A, p, Np=1000):
