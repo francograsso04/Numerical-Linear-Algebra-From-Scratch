@@ -1,4 +1,4 @@
-from util.imports import np,lb2
+from imports import np,lb2
 assert np.allclose(lb2.rota(0), np.eye(2))
 assert np.allclose(lb2.rota(np.pi / 2), np.array([[0, -1], [1, 0]]))
 assert np.allclose(lb2.rota(np.pi), np.array([[-1, 0], [0, -1]]))
