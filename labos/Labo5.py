@@ -19,14 +19,14 @@ def gen_Q(A, tol=1e-12):
 
 def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     """
-    A una matriz de n x n
+    A una matriz de m x n (con m >= n)
     tol la tolerancia con la que se filtran elementos nulos en R
     retorna_nops permite (opcionalmente) retornar el numero de operaciones realizado
     retorna matrices Q y R calculadas con Gram Schmidt (y como tercer argumento opcional, el numero de operaciones).
-    Si la matriz A no es de n x n, debe retornar None
+    Si la matriz A tiene dimensiones m < n, debe retornar None
     """
-    n,m = A.shape
-    if(n!=m):
+    m,n = A.shape
+    if(m < n):
       return None
     Q = gen_Q(A,tol);
     R = np.zeros((n,n));
