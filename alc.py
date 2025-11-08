@@ -13,7 +13,13 @@ IMPORTANTE:
     - Usar únicamente las funciones desarrolladas por el grupo.
     - Todas las funciones deben respetar la forma matricial solicitada.
 
-Autores: [Nombres del grupo]
+Autores:
+
+-Franco V. Grasso 132/23
+- Agregar
+- Agregar
+- Agregar
+
 Materia: Álgebra Lineal Computacional (UBA)
 """
 
