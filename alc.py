@@ -172,6 +172,8 @@ def pinvSVD(U, S, V, Y):
     #En la funcion nos dan directamente la descomposción.
     #Habria que preguntar si te pasan V o V*
     #Asumo que me pasan V
+    v_transpuesta = V.T #Hago transpuesta para pasarla como parametro a calcularPseudoInversa luego
+
     V, S_inversa, U_transpuesta = calcularPseudoInversa(U, S, v_transpuesta)
 
     W = calculo_W_SVD(V, S_inversa, U_transpuesta, Y)
