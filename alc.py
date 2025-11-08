@@ -133,12 +133,17 @@ def pinvSVD(U, S, V, Y):
     Calcula los pesos W utilizando la pseudo-inversa obtenida por SVD.
 
     Parámetros:
-        U, S, V : matrices de la descomposición SVD propia (no numpy)
+        U, S, V : matrices de la descomposición SVD propia 
         Y       : matriz de targets de entrenamiento
 
     Retorna:
         W = Y @ V @ S⁻¹ @ U.T
     """
+
+
+
+
+
 
     # TODO: implementar usando la versión manual de la inversa de S
     pass
@@ -184,23 +189,31 @@ def pinvGramSchmidt(Q, R, Y):
 
 def esPseudoInversa(X, pX, tol=1e-8):
     """
-    Verifica si pX es la pseudo-inversa de X según las condiciones de Moore-Penrose.
-
-    Condiciones:
-        1. X * pX * X = X
-        2. pX * X * pX = pX
-        3. (X * pX)^T = X * pX
-        4. (pX * X)^T = pX * X
-
-    Retorna:
-        True si se cumplen todas las condiciones dentro de la tolerancia.
+    Verifica si pX es la pseudo-inversa de X según Moore-Penrose.
+    
+    X: matriz original
+    pX: matriz candidata a pseudo-inversa
+    
+    Devuelve True si cumple las 4 condiciones, False si no.
     """
-    c1 = np.allclose(X @ pX @ X, X, atol=tol)
-    c2 = np.allclose(pX @ X @ pX, pX, atol=tol)
-    c3 = np.allclose((X @ pX).T, X @ pX, atol=tol)
-    c4 = np.allclose((pX @ X).T, pX @ X, atol=tol)
-    return c1 and c2 and c3 and c4
-
+       
+    # Condición 1: X * pX * X ≈ X
+    if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(X , pX) , X), X, tol):
+        return False
+    
+    # Condición 2: pX * X * pX ≈ pX
+    if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(pX ,X) , pX), pX, tol):
+        return False
+    
+    # Condición 3: (X * pX)^T ≈ X * pX
+    if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(X,pX)), lb1.matmulti(X,pX), tol):
+        return False
+    
+    # Condición 4: (pX * X)^T ≈ pX * X
+    if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(pX,X)), lb1.matmulti(pX,X), tol):
+        return False
+    
+    return True
 
 ####################################
 # 6. EVALUACIÓN Y BENCHMARKING
@@ -315,30 +328,4 @@ def pinvEcuacionesNormales(X, Y):
 
 
 
-def esPseudoInversa(X, pX, tol=1e-8):
-    """
-    Verifica si pX es la pseudo-inversa de X según Moore-Penrose.
-    
-    X: matriz original
-    pX: matriz candidata a pseudo-inversa
-    
-    Devuelve True si cumple las 4 condiciones, False si no.
-    """
-       
-    # Condición 1: X * pX * X ≈ X
-    if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(X , pX) , X), X, tol):
-        return False
-    
-    # Condición 2: pX * X * pX ≈ pX
-    if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(pX ,X) , pX), pX, tol):
-        return False
-    
-    # Condición 3: (X * pX)^T ≈ X * pX
-    if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(X,pX)), lb1.matmulti(X,pX), tol):
-        return False
-    
-    # Condición 4: (pX * X)^T ≈ pX * X
-    if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(pX,X)), lb1.matmulti(pX,X), tol):
-        return False
-    
-    return True
+
