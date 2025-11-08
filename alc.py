@@ -55,6 +55,7 @@ def cargarDataset(basePath):
     Xv, Yv = cargarCarpeta(valCats, valDogs)
 
     return Xt, Yt, Xv, Yv
+
 def cargarCarpeta(pathGatos, pathPerros):
     """
     Carga los embeddings de gatos y perros desde dos carpetas dadas y construye las matrices X e Y.
@@ -168,14 +169,18 @@ def pinvSVD(U, S, V, Y):
         W = Y @ V @ S⁻¹ @ U.T
     """
 
+    #En la funcion nos dan directamente la descomposción.
+    #Habria que preguntar si te pasan V o V*
+    #Asumo que me pasan V
+    v_transpuesta = V.T #Hago transpuesta para pasarla como parametro a calcularPseudoInversa luego
 
+    V, S_inversa, U_transpuesta = calcularPseudoInversa(U, S, V.T)
 
+    W = calculo_W_SVD(V, S_inversa, U_transpuesta, Y)
 
+    return W
 
-
-    # TODO: implementar usando la versión manual de la inversa de S
-    pass
-
+   
 
 ####################################
 # 4. DESCOMPOSICIÓN QR
@@ -308,7 +313,114 @@ def rango(A):
     return rango
 
 
+def calcularPseudoInversa(U,S,V_transpuesta):
+    """
+    Entrada: Descomposicion de valores singulares de una matriz
+    Retorna V,S+,U transpuesta que representa la pseudoInversa de A
+    """
+
+    V = V_transpuesta.T
+    U_transpuesta = U.T
+
+    filas, columnas = S.shape
+    S_inversa = np.zeros((columnas, filas))
+
+    #Uso tolerancia para no hacer divisiones de numeros muy chiquitos
+    #Consultar si se tiene que hacer asi a priori
+    tol = 1e-12
+    for i in range(min(filas, columnas)):
+        if S[i, i] > tol:
+            S_inversa[i, i] = 1 / S[i, i]
+
+
+    # A^+ = V * S^+ * U^T
+    return V, S_inversa, U_transpuesta
 
 
 
+
+def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
+   # El propósito de esta función es comprender el motivo por el cual resulta conveniente
+   # emplear la forma "reducida" de la descomposición SVD en el cálculo de la pseudoinversa.
+   # Hasta este punto disponemos de las matrices V, S_inversa, U_transpuesta y Y sin ningún tipo de reducción.
+   # El objetivo es ir simplificando gradualmente la representación, conservando solo
+   # la información relevante para el cálculo de W.
+
+   # 1) Cálculo del rango de la matriz S_inversa:
+   # El rango de S_inversa coincide con la cantidad de valores singulares distintos de cero de X.
+   # Este valor es fundamental, ya que determina cuántas direcciones (o componentes) aportan información útil.
+   # A partir del rango, podemos realizar las particiones necesarias en U y V para
+   # limitar las operaciones únicamente a las dimensiones efectivamente informativas.
+   #
+   # Por ejemplo, si U es una matriz de 1000x1000 pero X tiene solo 100 valores singulares no nulos,
+   # no resulta eficiente operar con las 1000 columnas: basta con conservar las primeras 100,
+   # que contienen toda la información relevante. El resultado obtenido es el mismo,
+   # pero con un costo computacional mucho menor.
+   #
+   # De esta manera, la pseudoinversa puede expresarse como:
+   # 
+   #     X⁺ = V Σ⁺ Uᵀ  ≈  V₁ Σ₁⁻¹ U₁ᵀ
+   #
+   # donde las matrices V₁, Σ₁ y U₁ corresponden a la forma reducida,
+   # es decir, solo las componentes asociadas a valores singulares distintos de cero.
+
+
+    rango = 0
+    filas_u, columnas_u = np.shape(S_inversa)
+    for i in range(filas_u):
+        for j in range(columnas_u):
+            if (S_inversa[i,j] > 0):
+                rango = rango + 1
+
+    #Ahora la variable rango es la cantidad de elementos > 0 de la diagonal sigma.
+    
+    # 2) Partición de las matrices U y V según el rango:
+    # Tomamos únicamente las primeras 'rango' columnas o filas necesarias.
+
+    V1 = V[:, :rango] # p×r
+    U1_T = U_transpuesta[:rango, :]  #r×n
+    S1_inversa = S_inversa[:rango, :rango] #Te queda rxr
+    
+    
+    # 3) Justificación de dimensiones:
+    # Sabemos que X ∈ ℝ^{n×p}  ⇒  X⁺ ∈ ℝ^{p×n}.
+    #
+    # La forma reducida de la pseudoinversa es:
+    #     X⁺ = V₁ Σ₁⁻¹ U₁ᵀ
+    #
+    # Analizando las dimensiones:
+    #     V₁ Σ₁⁻¹ U₁ᵀ  ⇒  (p×r)(r×r)(r×n)
+    #  Multiplicando de derecha a izquierda:
+    #     (r×r)(r×n) = (r×n)
+    #     (p×r)(r×n) = (p×n)
+    #
+    #  Por lo tanto, X⁺ ∈ ℝ^{p×n}, cumpliendo con las dimensiones esperadas.
+    #
+    # Este chequeo asegura la compatibilidad matricial y evita errores
+    # de producto al construir la pseudoinversa.
+
+    #Luego, 
+
+    #Si el rango efectivo de X es menor que su rango máximo, la pseudoinversa puede expresarse en forma reducida como X⁺ = V₁ Σ₁⁻¹ U₁ᵀ,  
+    # utilizando únicamente las componentes asociadas a valores singulares no nulos.”
+
+    #Las U2 y V2 no me importan porque son las particiones que se multiplican por los 0's de sigma. No es relevante. Sumaria costo computacional a la funcion
+    
+    # 4) Cálculo de la pseudoinversa reducida:
+    #     X⁺ = V₁ Σ₁⁻¹ U₁ᵀ
+    producto = lb1.matmulti(V1, S1_inversa)          # V₁ Σ₁⁻¹
+    pseudo_inv = lb1.matmulti(producto, U1_T) # V₁ Σ₁⁻¹ U₁ᵀ
+
+
+    # 5) Cálculo final de W:
+    #     W = Y X⁺ = Y (V₁ Σ₁⁻¹ U₁ᵀ)
+    W = lb1.matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
+
+    return W
+
+
+
+
+   
+   
 
