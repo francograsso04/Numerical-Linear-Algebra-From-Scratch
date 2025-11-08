@@ -104,24 +104,52 @@ def cargarCarpeta(pathGatos, pathPerros):
 # 2. ECUACIONES NORMALES
 ####################################
 
-def pinvEcuacionesNormales(L, Y):
+def pinvEcuacionesNormales(X, Y):
     """
-    Calcula los pesos W resolviendo las ecuaciones normales mediante factorización de Cholesky.
-
-    Parámetros:
-        L : matriz triangular inferior de la descomposición de Cholesky de (X @ X^T)
-        Y : matriz de targets de entrenamiento (m x p)
-
-    Retorna:
-        W : matriz de pesos óptimos que minimiza ||Y - W X||²
-
-    Fórmula:
-        W = Y * X^T * (X * X^T)^(-1)
-    donde la inversa de (X X^T) se obtiene a partir de L.
+    Calcula los pesos W usando pseudo-inversa por ecuaciones normales y Cholesky.
     
-    NOTA: Usar las funciones de tu implementación de forward y backward substitution.
+    X: matriz de entrada (n x p)
+    Y: matriz de tipos de imagenes (m x p)
+    
+    Devuelve:
+    W: pesos (m x n)
     """
-    pass
+    n, p = X.shape
+    rangoX = rango(X) 
+    
+    if rangoX == p and n > p: 
+        XTX = lb1.matmulti(lb1.transpuesta(X), X)
+        L, LT = descCholesky(XTX)
+        XT = lb1.transpuesta(X)
+   
+        U = np.zeros_like(XT)
+        for col in range(n):
+            b = XT[:, col]
+            z = lb4.res_tri(L, b, inferior=True)
+            u = lb4.res_tri(LT, z, inferior=False)
+            U[:, col] = u
+
+        W = lb1.matmulti(Y, U)
+
+    elif rangoX == n and n < p:  
+        XXT = lb1.matmulti(X, lb1.transpuesta(X))
+        L, LT = descCholesky(XXT)
+        XT = lb1.transpuesta(X)
+
+        V = np.zeros_like(XT)
+        for col in range(n):
+            b = XT[:, col]
+            z = lb4.res_tri(L, b, inferior=True)
+            v = lb4.res_tri(LT, z, inferior=False)
+            V[:, col] = v
+
+        W = lb1.matmulti(Y, V)
+
+    elif rangoX == n and n == p:  
+        XInv = lb4.inversa(X)  
+        W = lb1.matmulti(Y, XInv)
+
+    return W
 
 
 ####################################
@@ -279,52 +307,7 @@ def rango(A):
     rango = sum(1 for d in D if d > 0)
     return rango
 
-def pinvEcuacionesNormales(X, Y):
-    """
-    Calcula los pesos W usando pseudo-inversa por ecuaciones normales y Cholesky.
-    
-    X: matriz de entrada (n x p)
-    Y: matriz de tipos de imagenes (m x p)
-    
-    Devuelve:
-    W: pesos (m x n)
-    """
-    n, p = X.shape
-    rangoX = rango(X) 
-    
-    if rangoX == p and n > p: 
-        XTX = lb1.matmulti(lb1.transpuesta(X), X)
-        L, LT = descCholesky(XTX)
-        XT = lb1.transpuesta(X)
-   
-        U = np.zeros_like(XT)
-        for col in range(n):
-            b = XT[:, col]
-            z = lb4.res_tri(L, b, inferior=True)
-            u = lb4.res_tri(LT, z, inferior=False)
-            U[:, col] = u
 
-        W = lb1.matmulti(Y, U)
-
-    elif rangoX == n and n < p:  
-        XXT = lb1.matmulti(X, lb1.transpuesta(X))
-        L, LT = descCholesky(XXT)
-        XT = lb1.transpuesta(X)
-
-        V = np.zeros_like(XT)
-        for col in range(n):
-            b = XT[:, col]
-            z = lb4.res_tri(L, b, inferior=True)
-            v = lb4.res_tri(LT, z, inferior=False)
-            V[:, col] = v
-
-        W = lb1.matmulti(Y, V)
-
-    elif rangoX == n and n == p:  
-        XInv = lb4.inversa(X)  
-        W = lb1.matmulti(Y, XInv)
-
-    return W
 
 
 
