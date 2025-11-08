@@ -1,6 +1,5 @@
 from imports import np, plt
 
-
 def error(x, y):
     y64 = np.float64(y)   # convertir y a float64
     return abs(x - y64)
