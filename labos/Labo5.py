@@ -1,22 +1,4 @@
 from imports import np, plt,lb1,lb3
-def gen_Q(A, tol=1e-12):
-    n, m = A.shape
-    k = min(n, m)
-    Q = np.zeros((n, k))
-    for i in range(k):
-        v = A[:, i].copy()
-        for j in range(i):
-            inner_product = lb1.vector_dot(Q[:, j], v)
-            v = v - inner_product * Q[:, j]
-        norm_2 = lb3.norma(v,2)
-        if norm_2 > tol:
-            Q[:, i] = v / norm_2
-        else:
-            Q[:, i] = np.zeros(n)
-
-    return Q
-
-
 def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     """
     A una matriz de m x n (con m >= n)
@@ -28,12 +10,24 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     m,n = A.shape
     if(m < n):
       return None
-    Q = gen_Q(A,tol);
-    R = np.zeros((n,n));
-    for i in range(0, n):
-      R[i,i] = lb1.vector_dot(Q[:, i], A[:, i]);
-      for j in range(0, i):
-        R[j, i] = lb1.vector_dot(Q[:,j], A[:, i])
+  
+    Q = np.zeros((m, n))
+    R = np.zeros((n, n))
+    
+    for i in range(n):
+        v = A[:, i].copy()
+        for j in range(i):
+            inner_product = lb1.vector_dot(Q[:, j], v)
+            R[j,i] = inner_product
+            v = v - inner_product * Q[:,j]
+        norm_2 = lb3.norma(v,2)
+        if norm_2 > tol:
+            R[i,i] = norm_2
+            Q[:,i] = v/norm_2
+        else:
+            R[i,i] = 0.0
+            Q[:,i] = 0.0
+
     return Q,R
 
 
