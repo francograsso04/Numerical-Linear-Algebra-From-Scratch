@@ -212,13 +212,14 @@ def pinvGramSchmidt(Q, R, Y):
     Retorna:
         W : pesos óptimos
     """
+    # Como Gram-Schmidt se puede hacer únicamente con una matriz en ℝ^{n×p} con n >= p, hacemos la desc QR en X.T
     # Si QR = X.T -> X+ = Q (R.T)-1
     # Entonces vamos a buscar la inversa de R.T y hacer el producto con Q para encontrar X+
-    Rt_inv = inversa(R.T)
-    X_p = matmulti(Q, Rt_inv)
+    Rt_inv = lb4.inversa(R.T)
+    X_p = lb1.matmulti(Q, Rt_inv)
     
     # Calculamos W = YX+
-    W = matmulti(Y,X_p)
+    W = lb1.matmulti(Y,X_p)
     
     return W
 
