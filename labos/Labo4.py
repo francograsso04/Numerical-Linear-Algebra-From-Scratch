@@ -20,21 +20,19 @@ def calculaLU(A):
 
     for k in range(n-1):
         pivot = U[k, k]
-        if pivot == 0:
+        if np.abs(pivot) < 1e-08: #Si todos los pivotes de U son distintos a 0, det(U) != 0
             return None, None, 0
-        if np.linalg.det(U) == 0: #Esto lo agrego por el de matriz inversa
-            return None, None, 0
-
 
         for i in range(k+1, n):
             L[i, k] = U[i, k] / pivot
             for j in range(k, n):
                 U[i, j] -= L[i, k] * U[k, j]
                 nops += 2
+                
+    if np.abs(U[n-1, n-1]) < 1e-08: #Verificamos también para el último pivot
+         return None, None, 0
 
     return L, U, nops
-
-
 
 
 def res_tri(L, b, inferior=True):
