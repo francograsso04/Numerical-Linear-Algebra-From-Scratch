@@ -212,9 +212,15 @@ def pinvGramSchmidt(Q, R, Y):
     Retorna:
         W : pesos óptimos
     """
-    # TODO: implementar siguiendo el Algoritmo 3 del enunciado
-    pass
-
+    # Si QR = X.T -> X+ = Q (R.T)-1
+    # Entonces vamos a buscar la inversa de R.T y hacer el producto con Q para encontrar X+
+    Rt_inv = inversa(R.T)
+    X_p = matmulti(Q, Rt_inv)
+    
+    # Calculamos W = YX+
+    W = matmulti(Y,X_p)
+    
+    return W
 
 ####################################
 # 5. PSEUDO-INVERSA DE MOORE-PENROSE
