@@ -213,13 +213,19 @@ def pinvGramSchmidt(Q, R, Y):
         W : pesos óptimos
     """
     # Como Gram-Schmidt se puede hacer únicamente con una matriz en ℝ^{n×p} con n >= p, hacemos la desc QR en X.T
-    # Si QR = X.T -> X+ = Q (R.T)-1
-    # Entonces vamos a buscar la inversa de R.T y hacer el producto con Q para encontrar X+
-    Rt_inv = lb4.inversa(R.T)
-    X_p = lb1.matmulti(Q, Rt_inv)
+    # Si QR = X.T -> X+ = Q (R.T)-1 -> X+ R.T = Q
+    # Si X.T es de dims {pxn} -> Q es de {pxn} y R es de {nxn} (al igual que (R.T)-1)
+    # Luego X+ tiene dims {pxn}
+    # Vamos el sistema triangular X+ R.T = Q, con R.T triangular inferior, con cada fila de Q para encontrar todas las filas de X+
+    p, n = Q.shape
+    pX = np.zeros((p,n))
     
+    for fila in range(p):
+        pX[fila,:] = lb4.res_tri(R.T, Q[fila,:])
+
     # Calculamos W = YX+
-    W = lb1.matmulti(Y,X_p)
+    # Si Y es de dims {2xp}, y X+ de {pxn} -> dim (W) = {2xn}
+    W = lb1.matmulti(Y,pX)
     
     return W
 
