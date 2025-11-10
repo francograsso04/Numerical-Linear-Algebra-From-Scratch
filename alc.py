@@ -1,5 +1,6 @@
 from imports import *
-
+from labos.Labo1 import matmulti, transpuesta
+from labos.Labo4 import inversa
 
 """
 Módulo: alc.py
@@ -67,7 +68,7 @@ def cargarCarpeta(pathGatos, pathPerros):
         * [0, 1] para perros
     
     Retorna:
-        X -> matriz de embeddings 
+        X -> matriz de embeddings
         Y -> matriz de etiquetas 
     """
     XList = []
@@ -76,29 +77,22 @@ def cargarCarpeta(pathGatos, pathPerros):
 
     for archivo in os.listdir(pathGatos):
         if archivo.endswith(".npy"):
-            embedding = np.load(os.path.join(pathGatos, archivo))  
-            XList.append(embedding.reshape(-1, 1)) #El reshape -1 es para hacerlo vector columna(Preguntar bien esto)
-            YList.append(np.array([[1], [0]]))      
+            embedding = np.load(os.path.join(pathGatos, archivo))
+            XList.append(embedding)
+            aux = np.array([[1, 0]] * embedding.shape[1])
+            YList.append(aux)
 
     for archivo in os.listdir(pathPerros):
         if archivo.endswith(".npy"):
             embedding = np.load(os.path.join(pathPerros, archivo))
-            XList.append(embedding.reshape(-1, 1))  
-            YList.append(np.array([[0], [1]]))      
+            XList.append(embedding)
+            aux = np.array([[0, 1]] * embedding.shape[1])
+            YList.append(aux)
 
 
-    cantidadImagenes = XList[0].shape[0]#creo que no hay una mejor manera,salvo que XList no sea una lista
-    cantidadDeTiposDeImagenes = len(XList)           
-
-
-    X = np.zeros((cantidadImagenes, cantidadDeTiposDeImagenes))
-    Y = np.zeros((2, cantidadDeTiposDeImagenes))     
-
-    for i in range(cantidadDeTiposDeImagenes):
-        X[:, i] = XList[i].flatten() #Sino se aplana pincha
-        Y[:, i] = YList[i].flatten()
-
-    return X, Y
+    # NOTE: se esta retornando array de matrices por cada parametro de salida
+    # La idea es que se tiene separado los datos de dogs como de cats
+    return np.array(XList), np.array(YList)
 
 
 ####################################
@@ -108,21 +102,21 @@ def cargarCarpeta(pathGatos, pathPerros):
 def pinvEcuacionesNormales(X, Y):
     """
     Calcula los pesos W usando pseudo-inversa por ecuaciones normales y Cholesky.
-    
+
     X: matriz de entrada (n x p)
     Y: matriz de tipos de imagenes (m x p)
-    
+
     Devuelve:
     W: pesos (m x n)
     """
     n, p = X.shape
-    rangoX = rango(X) 
-    
-    if rangoX == p and n > p: 
+    rangoX = rango(X)
+
+    if rangoX == p and n > p:
         XTX = lb1.matmulti(lb1.transpuesta(X), X)
         L, LT = descCholesky(XTX)
         XT = lb1.transpuesta(X)
-   
+
         U = np.zeros_like(XT)
         for col in range(n):
             b = XT[:, col]
@@ -132,7 +126,7 @@ def pinvEcuacionesNormales(X, Y):
 
         W = lb1.matmulti(Y, U)
 
-    elif rangoX == n and n < p:  
+    elif rangoX == n and n < p:
         XXT = lb1.matmulti(X, lb1.transpuesta(X))
         L, LT = descCholesky(XXT)
         XT = lb1.transpuesta(X)
@@ -146,8 +140,8 @@ def pinvEcuacionesNormales(X, Y):
 
         W = lb1.matmulti(Y, V)
 
-    elif rangoX == n and n == p:  
-        XInv = lb4.inversa(X)  
+    elif rangoX == n and n == p:
+        XInv = lb4.inversa(X)
         W = lb1.matmulti(Y, XInv)
 
     return W
@@ -162,7 +156,7 @@ def pinvSVD(U, S, V, Y):
     Calcula los pesos W utilizando la pseudo-inversa obtenida por SVD.
 
     Parámetros:
-        U, S, V : matrices de la descomposición SVD propia 
+        U, S, V : matrices de la descomposición SVD propia
         Y       : matriz de targets de entrenamiento
 
     Retorna:
@@ -180,7 +174,7 @@ def pinvSVD(U, S, V, Y):
 
     return W
 
-   
+
 
 ####################################
 # 4. DESCOMPOSICIÓN QR
@@ -197,8 +191,10 @@ def pinvHouseHolder(Q, R, Y):
     Retorna:
         W : pesos que minimizan ||Y - W X||²
     """
-    # TODO: implementar siguiendo el Algoritmo 3 del enunciado
-    pass
+    R_T = transpuesta(R)
+    R_T_inversa = inversa(R_T)
+    X_p = matmulti(Q,R_T_inversa)
+    return matmulti(Y, X_p)
 
 
 def pinvGramSchmidt(Q, R, Y):
@@ -212,15 +208,23 @@ def pinvGramSchmidt(Q, R, Y):
     Retorna:
         W : pesos óptimos
     """
-    # Si QR = X.T -> X+ = Q (R.T)-1
-    # Entonces vamos a buscar la inversa de R.T y hacer el producto con Q para encontrar X+
-    Rt_inv = inversa(R.T)
-    X_p = matmulti(Q, Rt_inv)
-    
+    # Como Gram-Schmidt se puede hacer únicamente con una matriz en ℝ^{n×p} con n >= p, hacemos la desc QR en X.T
+    # Si QR = X.T -> X+ = Q (R.T)-1 -> X+ R.T = Q
+    # Si X.T es de dims {pxn} -> Q es de {pxn} y R es de {nxn} (al igual que (R.T)-1)
+    # Luego X+ tiene dims {pxn}
+    # Vamos el sistema triangular X+ R.T = Q, con R.T triangular inferior, con cada fila de Q para encontrar todas las filas de X+
+    p, n = Q.shape
+    pX = np.zeros((p, n))
+
+    for fila in range(p):
+        pX[fila, :] = lb4.res_tri(R.T, Q[fila, :])
+
     # Calculamos W = YX+
-    W = matmulti(Y,X_p)
-    
+    # Si Y es de dims {2xp}, y X+ de {pxn} -> dim (W) = {2xn}
+    W = lb1.matmulti(Y, pX)
+
     return W
+
 
 ####################################
 # 5. PSEUDO-INVERSA DE MOORE-PENROSE
@@ -229,29 +233,29 @@ def pinvGramSchmidt(Q, R, Y):
 def esPseudoInversa(X, pX, tol=1e-8):
     """
     Verifica si pX es la pseudo-inversa de X según Moore-Penrose.
-    
+
     X: matriz original
     pX: matriz candidata a pseudo-inversa
-    
+
     Devuelve True si cumple las 4 condiciones, False si no.
     """
-       
+
     # Condición 1: X * pX * X ≈ X
     if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(X , pX) , X), X, tol):
         return False
-    
+
     # Condición 2: pX * X * pX ≈ pX
     if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(pX ,X) , pX), pX, tol):
         return False
-    
+
     # Condición 3: (X * pX)^T ≈ X * pX
     if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(X,pX)), lb1.matmulti(X,pX), tol):
         return False
-    
+
     # Condición 4: (pX * X)^T ≈ pX * X
     if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(pX,X)), lb1.matmulti(pX,X), tol):
         return False
-    
+
     return True
 
 ####################################
@@ -364,7 +368,7 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
    # pero con un costo computacional mucho menor.
    #
    # De esta manera, la pseudoinversa puede expresarse como:
-   # 
+   #
    #     X⁺ = V Σ⁺ Uᵀ  ≈  V₁ Σ₁⁻¹ U₁ᵀ
    #
    # donde las matrices V₁, Σ₁ y U₁ corresponden a la forma reducida,
@@ -379,15 +383,15 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
                 rango = rango + 1
 
     #Ahora la variable rango es la cantidad de elementos > 0 de la diagonal sigma.
-    
+
     # 2) Partición de las matrices U y V según el rango:
     # Tomamos únicamente las primeras 'rango' columnas o filas necesarias.
 
     V1 = V[:, :rango] # p×r
     U1_T = U_transpuesta[:rango, :]  #r×n
     S1_inversa = S_inversa[:rango, :rango] #Te queda rxr
-    
-    
+
+
     # 3) Justificación de dimensiones:
     # Sabemos que X ∈ ℝ^{n×p}  ⇒  X⁺ ∈ ℝ^{p×n}.
     #
@@ -405,13 +409,13 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     # Este chequeo asegura la compatibilidad matricial y evita errores
     # de producto al construir la pseudoinversa.
 
-    #Luego, 
+    #Luego,
 
-    #Si el rango efectivo de X es menor que su rango máximo, la pseudoinversa puede expresarse en forma reducida como X⁺ = V₁ Σ₁⁻¹ U₁ᵀ,  
+    #Si el rango efectivo de X es menor que su rango máximo, la pseudoinversa puede expresarse en forma reducida como X⁺ = V₁ Σ₁⁻¹ U₁ᵀ,
     # utilizando únicamente las componentes asociadas a valores singulares no nulos.”
 
     #Las U2 y V2 no me importan porque son las particiones que se multiplican por los 0's de sigma. No es relevante. Sumaria costo computacional a la funcion
-    
+
     # 4) Cálculo de la pseudoinversa reducida:
     #     X⁺ = V₁ Σ₁⁻¹ U₁ᵀ
     producto = lb1.matmulti(V1, S1_inversa)          # V₁ Σ₁⁻¹
@@ -427,6 +431,6 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
 
 
 
-   
-   
+
+
 
