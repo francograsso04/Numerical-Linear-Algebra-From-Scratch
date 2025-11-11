@@ -89,10 +89,10 @@ def cargarCarpeta(pathGatos, pathPerros):
             aux = np.array([[0, 1]] * embedding.shape[1])
             YList.append(aux)
 
+    X =  np.array(XList)
+    Y = np.array(YList)
 
-    # NOTE: se esta retornando array de matrices por cada parametro de salida
-    # La idea es que se tiene separado los datos de dogs como de cats
-    return np.array(XList), np.array(YList)
+    return np.hstack((X[0][:,], X[1][:,])), np.vstack((Y[0][:,], Y[1][:,]))
 
 
 ####################################
