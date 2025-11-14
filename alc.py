@@ -217,7 +217,7 @@ def pinvGramSchmidt(Q, R, Y):
     pX = np.zeros((p, n))
 
     for fila in range(p):
-        pX[fila, :] = lb4.res_tri(R.T, Q[fila, :])
+        pX[fila, :] = lb4.res_tri(transpuesta(R), Q[fila, :])
 
     # Calculamos W = YX+
     # Si Y es de dims {2xp}, y X+ de {pxn} -> dim (W) = {2xn}
