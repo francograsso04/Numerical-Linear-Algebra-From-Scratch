@@ -212,17 +212,21 @@ def pinvGramSchmidt(Q, R, Y):
     # Si QR = X.T -> X+ = Q (R.T)-1 -> X+ R.T = Q
     # Si X.T es de dims {pxn} -> Q es de {pxn} y R es de {nxn} (al igual que (R.T)-1)
     # Luego X+ tiene dims {pxn}
-    # Vamos el sistema triangular X+ R.T = Q, con R.T triangular inferior, con cada fila de Q para encontrar todas las filas de X+
+    # Para resolver X+ R.T = Q, transponemos ambos lados. Así, R (X+).T = Q.T (con R triangular superior)
+    # Resolvemos este sistema triangular para cada fila de Q (cada una es una columna de Q.T) para encontrar todas las columnas de (X+).T
+
     p, n = Q.shape
-    pX = np.zeros((p, n))
+    pX_T = np.zeros((n, p))
 
-    for fila in range(p):
-        pX[fila, :] = lb4.res_tri(transpuesta(R), Q[fila, :])
-
+    for i in range(n):
+        pX_T[:, i] = lb4.res_tri(R, Q[i, :], inferior=False)
+        
+    pX = pX_T.T
+    
     # Calculamos W = YX+
     # Si Y es de dims {2xp}, y X+ de {pxn} -> dim (W) = {2xn}
     W = lb1.matmulti(Y, pX)
-
+    
     return W
 
 
