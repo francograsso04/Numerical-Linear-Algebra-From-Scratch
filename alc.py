@@ -129,16 +129,15 @@ def pinvEcuacionesNormales(X, Y):
     elif rangoX == n and n < p:
         XXT = lb1.matmulti(X, lb1.transpuesta(X))
         L, LT = descCholesky(XXT)
-        XT = lb1.transpuesta(X)
 
         V = np.zeros_like(XT)
         for col in range(n):
-            b = XT[:, col]
+            b = X[:, col]
             z = lb4.res_tri(L, b, inferior=True)
             v = lb4.res_tri(LT, z, inferior=False)
             V[:, col] = v
 
-        W = lb1.matmulti(Y, V)
+        W = lb1.matmulti(Y, lb1.transpuesta(V))
 
     elif rangoX == n and n == p:
         XInv = lb4.inversa(X)
