@@ -1,6 +1,5 @@
 from imports import *
-from labos.Labo1 import matmulti, transpuesta
-from labos.Labo4 import inversa
+
 
 """
 Módulo: alc.py
@@ -18,7 +17,7 @@ Autores:
 
 -Franco V. Grasso 132/23
 -Ramiro Arbetman 1307/24
-- Agregar
+-Nicolas Marchetto 581/23
 - Agregar
 
 Materia: Álgebra Lineal Computacional (UBA)
@@ -104,8 +103,9 @@ def pinvEcuacionesNormales(X,L,Y):
     """
     Calcula los pesos W usando pseudo-inversa por ecuaciones normales y Cholesky.
 
-    X: matriz de entrada (n x p)
-    Y: matriz de tipos de imagenes (m x p)
+    X: matriz de entrada 
+    Y: matriz de tipos de imagenes 
+    L: L de Cholesky 
 
     Devuelve:
     W: pesos (m x n)
@@ -186,10 +186,10 @@ def pinvHouseHolder(Q, R, Y):
     Retorna:
         W : pesos que minimizan ||Y - W X||²
     """
-    R_T = transpuesta(R)
-    R_T_inversa = inversa(R_T)
-    X_p = matmulti(Q,R_T_inversa)
-    return matmulti(Y, X_p)
+    R_T = lb1.transpuesta(R)
+    R_T_inversa = lb4.inversa(R_T)
+    X_p = lb1.matmulti(Q,R_T_inversa)
+    return lb1.matmulti(Y, X_p)
 
 
 def pinvGramSchmidt(Q, R, Y):
@@ -279,10 +279,6 @@ def evaluarModelo(W, Xv, Yv):
     return conf, accuracy
 
 
-####################################
-# 7. SÍNTESIS FINAL
-####################################
-# (Esto no es código, sino análisis. Cada integrante redacta su parte en el informe)
 
 
 ####################################
