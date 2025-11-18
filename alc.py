@@ -289,17 +289,21 @@ def evaluarModelo(W, Xv, Yv):
 # 0. Funciones auxiliares
 ####################################
 def obtenerL(X):
+    """
+    Calcula la L a partir de X dependiendo de en que caso
+    se encuentra.
+    """
     n, p = X.shape
     rangoX = rango(X)
 
     if rangoX == p and n > p:
         XTX = lb1.matmulti(lb1.transpuesta(X), X)
-        L = descCholesky(XTX)
+        L,_ = descCholesky(XTX)
         return L
 
     elif rangoX == n and n < p:
         XXT = lb1.matmulti(X, lb1.transpuesta(X))
-        L  = descCholesky(XXT)
+        L,_  = descCholesky(XXT)
         return L
 
 def descCholesky(A):
