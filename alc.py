@@ -99,7 +99,8 @@ def cargarCarpeta(pathGatos, pathPerros):
 # 2. ECUACIONES NORMALES
 ####################################
 
-def pinvEcuacionesNormales(X, Y):
+
+def pinvEcuacionesNormales(X,L,Y):
     """
     Calcula los pesos W usando pseudo-inversa por ecuaciones normales y Cholesky.
 
@@ -111,10 +112,9 @@ def pinvEcuacionesNormales(X, Y):
     """
     n, p = X.shape
     rangoX = rango(X)
+    LT = lb1.transpuesta(L)
 
     if rangoX == p and n > p:
-        XTX = lb1.matmulti(lb1.transpuesta(X), X)
-        L, LT = descCholesky(XTX)
         XT = lb1.transpuesta(X)
 
         U = np.zeros_like(XT)
@@ -127,9 +127,6 @@ def pinvEcuacionesNormales(X, Y):
         W = lb1.matmulti(Y, U)
 
     elif rangoX == n and n < p:
-        XXT = lb1.matmulti(X, lb1.transpuesta(X))
-        L, LT = descCholesky(XXT)
-
         V = np.zeros_like(XT)
         for col in range(n):
             b = X[:, col]
@@ -144,7 +141,6 @@ def pinvEcuacionesNormales(X, Y):
         W = lb1.matmulti(Y, XInv)
 
     return W
-
 
 ####################################
 # 3. DESCOMPOSICIÓN EN VALORES SINGULARES (SVD)
@@ -292,6 +288,19 @@ def evaluarModelo(W, Xv, Yv):
 ####################################
 # 0. Funciones auxiliares
 ####################################
+def obtenerL(X):
+    n, p = X.shape
+    rangoX = rango(X)
+
+    if rangoX == p and n > p:
+        XTX = lb1.matmulti(lb1.transpuesta(X), X)
+        L = descCholesky(XTX)
+        return L
+
+    elif rangoX == n and n < p:
+        XXT = lb1.matmulti(X, lb1.transpuesta(X))
+        L  = descCholesky(XXT)
+        return L
 
 def descCholesky(A):
     """
