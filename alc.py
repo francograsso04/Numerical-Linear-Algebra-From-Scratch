@@ -1,5 +1,8 @@
-from imports import *
-
+import numpy as np
+import  pandas  as pd
+from sklearn.metrics import confusion_matrix
+import os
+import matplotlib.pyplot as plt
 
 """
 Módulo: alc.py
@@ -22,6 +25,709 @@ Autores:
 
 Materia: Álgebra Lineal Computacional (UBA)
 """
+
+
+####################################
+# 0. LABORATORIO
+####################################
+
+# Funciones del laboratorio 1
+
+def error(x, y):
+    y64 = np.float64(y)   # convertir y a float64
+    return abs(x - y64)
+def error_relativo(x, y):
+
+    x64 = np.float64(x)
+    y64 = np.float64(y)
+    return abs(x64 - y64) / abs(x64)
+
+def sonIguales(x, y, atol=1e-08):
+    return np.allclose(error(x, y), 0, atol=atol)
+
+def matricesIguales(unaMatriz,otraMatriz):
+  for i in range(unaMatriz.shape[0]):
+    for j in range(unaMatriz.shape[1]):
+      if not sonIguales(unaMatriz[i,j], otraMatriz[i,j]):
+        return False
+  return True
+def sonIguales(x, y, atol=1e-08):
+    return np.allclose(error(x, y), 0, atol=atol)
+
+def matmulti(A, B):
+    """
+    Multiplicación de matriz por matriz o matriz por vector
+    """
+    if  len(B.shape) == 1:  # vector
+        n, m = A.shape
+        result = np.zeros(n)
+        for i in range(n):
+          result[i] = sum(A[i, j] * B[j] for j in range(m))
+        return result
+    else:  # matriz
+        n, m = A.shape
+        m2, p = B.shape
+        result = np.zeros((n, p))
+        for i in range(n):
+          for j in range(p):
+            result[i, j] = sum(A[i, k] * B[k, j] for k in range(m))
+        return result
+
+def vector_dot(v, w):
+    """
+    Producto interno de dos vectores
+    """
+    v = np.array(v)
+    w = np.array(w)
+    suma = sum(v[i] * w[i] for i in range(len(v)))
+    return suma
+
+def outer(v, w):
+    """
+    Calcula el producto externo entre dos vectores 
+    """
+    v = np.array(v)
+    w = np.array(w)
+    n = len(v)
+    m = len(w)
+    M = np.zeros((n, m))
+    for i in range(n):
+        for j in range(m):
+            M[i, j] = v[i] * w[j]
+    return M
+
+def transpuesta(A):
+    """
+    Transpone una matriz
+    """
+    filas, columnas = A.shape
+    ATranspuesta = np.zeros((columnas, filas))
+    for i in range(filas):
+        for j in range(columnas):
+            ATranspuesta[j, i] = A[i, j]
+    return ATranspuesta
+
+
+# Funciones del laboratorio 2
+
+def rota(theta):
+    return np.array([
+        [np.cos(theta), -np.sin(theta)],
+        [np.sin(theta),  np.cos(theta)]
+    ])
+
+def escala(factoresEscala):
+    dimension = len(factoresEscala)
+    matrizEscala = np.zeros((dimension, dimension))
+    for i in range(dimension):
+        matrizEscala[i, i] = factoresEscala[i]
+    return matrizEscala
+
+def rota_y_escala(angulo, factoresEscala):
+    matrizRotacion = rota(angulo)
+    matrizEscala = escala(factoresEscala)
+    return matrizEscala @ matrizRotacion
+
+def afin(angulo, factoresEscala, vector):
+    matrizRotaYEscala = rota_y_escala(angulo,factoresEscala)
+    matrizAfin = np.eye(3)                   # np.eye hace la identidad(el 3 es por 3x3)
+    matrizAfin[:2, :2] = matrizRotaYEscala   # [:2, :2] significa que matrizRotaYEscala la pongo en las fila 0 y 1 y en las columnas 0 y 1
+    matrizAfin[:2, 2] = vector               # Osea que tengo[1,0,0 y tomo la le asigno a la submatriz [1,0  la matrizRotaYEscala
+                                             #                0,1,0                                     0,1]
+                                             #               0,0,1] En [:2, :2] es asigno a las posiciones de las fila 0 y 1 de la columna 2
+    return matrizAfin
+
+def trans_afin(vector, angulo, factoresEscala, vectorDeTraslacion):
+    matrizAfin = afin(angulo, factoresEscala, vectorDeTraslacion)
+    vectorEnR3 = np.array([vector[0], vector[1], 1])
+    vectorTransformacion = matmulti(matrizAfin, vectorEnR3)
+
+    return vectorTransformacion[:2]          # Tomo solo los 2 primeros numeros
+
+# Funciones del laboratorio 3
+
+def norma(unVectorASacarNorma, unValorDeNorma):
+    if unValorDeNorma == 1:
+        return np.sum(np.abs(unVectorASacarNorma))
+    elif unValorDeNorma == 'inf':
+        return np.max(np.abs(unVectorASacarNorma))
+    else:
+        return np.sum(np.abs(unVectorASacarNorma)**unValorDeNorma)**(1/unValorDeNorma)
+
+def normaliza(X,p):
+  Y = []
+  for x in X:
+    norma_val = norma(x,p)
+    if(norma_val == 0):
+      Y.append(x)
+    else:
+      Y.append(x/norma_val)
+  return Y
+
+def normaMatMC(A, q, p, Np):
+  max = 0.0
+  X = [np.random.rand(A.shape[0]) for _ in range(Np)]
+  x_normalize = normaliza(X, p);
+  best_x = None
+  for i in range(Np):
+    y = A @ x_normalize[i]
+    norm_q = norma(y, q)
+    if norm_q > max:
+      max = norm_q
+      best_x = x_normalize[i]
+  return (max, best_x)
+
+def normaInfinito(unaMatrizANormalizar):
+  norma = 0
+
+  for i in range(unaMatrizANormalizar.shape[0]):
+    suma = 0
+    for j in range(unaMatrizANormalizar.shape[1]):
+      suma += abs(unaMatrizANormalizar[i, j])
+    if suma > 0:
+      norma = suma
+  return norma
+
+def norma1(unaMatrizANormalizar):
+  norma = 0
+
+  for j in range(unaMatrizANormalizar.shape[1]):
+      suma = 0
+      for i in range(unaMatrizANormalizar.shape[0]):
+        suma += abs(unaMatrizANormalizar[i, j])
+      if suma > 0:
+        norma = suma
+  return norma
+
+
+def normaExacta(unaMatrizANormalizar, p = [1, 'inf']):
+
+  if p == [1, 'inf']:
+    norma_1 = norma1(unaMatrizANormalizar)
+    norma_inf = normaInfinito(unaMatrizANormalizar)
+    return (norma_1,norma_inf)
+  elif p == 1:
+    return norma1(unaMatrizANormalizar)
+  elif p == 'inf':
+    return normaInfinito(unaMatrizANormalizar)
+  return None
+
+
+def condMC(A, p, Np=1000):
+  inv_A = np.linalg.inv(A)
+  return normaMatMC(A, p, p, Np)[0] * normaMatMC(inv_A, p, p, Np)[0]
+
+
+def condExacta(unaMatriz, unValorDeNorma):
+  if unValorDeNorma not in [1, 'inf'] and unValorDeNorma != [1, 'inf']:
+    return None
+
+  inversa = np.linalg.inv(unaMatriz)
+  norma = normaExacta(unaMatriz, unValorDeNorma)
+  normaInv = normaExacta(inversa, unValorDeNorma)
+  return norma * normaInv
+
+# Funciones del laboratorio 4
+
+def calculaLU(A):
+    """
+    Calcula la factorización LU de la matriz A con unos en la diagonal de L.
+    Retorna (L, U, nops).
+    Si no se puede factorizar, retorna (None, None, 0).
+
+    nops cuenta las multiplicaciones y sumas/restas hechas durante la eliminación.
+    """
+    if A is None:
+      return None, None, 0
+
+    n , m = A.shape
+    if n != m:
+      return None, None, 0
+    L = np.eye(n)
+    U = A.copy()
+    nops = -n  #Esto es porque en el programa cuento como una resta poner el 0 y no lo deberia contar
+
+    for k in range(n-1):
+        pivot = U[k, k]
+        if np.abs(pivot) < 1e-08: 
+            return None, None, 0
+
+        for i in range(k+1, n):
+            L[i, k] = U[i, k] / pivot
+            for j in range(k, n):
+                U[i, j] -= L[i, k] * U[k, j]
+                nops += 2
+                
+    if np.abs(U[n-1, n-1]) < 1e-08: 
+         return None, None, 0
+
+    return L, U, nops
+
+
+def res_tri(L, b, inferior=True):
+  n = L.shape[0]
+  x = np.zeros(n)
+  if  inferior:
+    for i in range(n):
+      x[i] += b[i] / L[i, i]
+      for j in range(i):
+        x[i] -= (L[i, j] * x[j])/L[i, i]
+  else:
+    for i in range(n-1,-1,-1):
+      x[i] += b[i] / L[i, i]
+      for j in range(n-1,i,-1):
+        x[i] -= (L[i, j] * x[j])/L[i, i]
+
+  return x
+
+def inversa(A):
+  L,U,nops = calculaLU(A)
+  if L is None:
+    return None
+  else:
+    n = A.shape[0]
+    inversa =np.zeros((n, n))
+
+    for i in range(n):
+      b = np.zeros(n)
+      b[i] = 1
+      d = res_tri(L, b, inferior=True)
+      x = res_tri(U, d, inferior=False)
+      inversa[:, i] = x
+
+    return inversa
+
+
+def diagonal_de_matriz(A):
+  x,y = A.shape
+  if x != y:
+    return None
+
+  nueva_matriz = np.zeros((x,y))
+  for i in range(x):
+    for j in range(y):
+      if j == i:
+        nueva_matriz[i,j] = A[i,j]
+  return nueva_matriz
+
+
+def calculaLDV(A):
+    n = A.shape[0]
+    L,U,nops = calculaLU(A)
+    if L is None:
+      return None,None,None
+    D = np.eye(n)
+    for i in range(n):
+      D[i][i] = U[i][i]
+    for i in range(n):
+      for j in range(n):
+        U[i, j] = U[i,j] / D[i, i]
+    return L,D,U
+
+def esSimetrica(A):
+    AT = transpuesta(A)
+    return matricesIguales(A, AT)
+
+
+def la_diagonal_es_positiva(A):
+  return np.all(np.diag(A) > 0)
+
+def esSDP(A,atol=1e-8):
+    """
+    Checkea si la matriz A es simétrica definida positiva (SDP) usando
+    la factorización LDV.
+    """
+    L,D,V = calculaLDV(A)
+    iguales = True
+    if L is None:
+        return False
+    for i in range(A.shape[0]):
+      for j in range(A.shape[1]):
+        if not sonIguales(A[i,j], transpuesta(A)[i,j],atol):
+          iguales = False
+    return iguales and la_diagonal_es_positiva(D)
+
+# Funciones del laboratorio 5
+
+def gen_Q(A, tol=1e-12):
+    '''
+    Ortonormaliza las columnas de A
+    '''
+    n, m = A.shape
+    k = min(n, m)
+    Q = np.zeros((n, k))
+    for i in range(k):
+        v = A[:, i].copy()
+        for j in range(i):
+            inner_product = vector_dot(Q[:, j], v)
+            v = v - inner_product * Q[:, j]
+        norm_2 = norma(v,2)
+        if norm_2 > tol:
+            Q[:, i] = v / norm_2
+        else:
+            Q[:, i] = np.zeros(n)
+
+    return Q
+    
+def QR_con_GS(A,tol=1e-12,retorna_nops=False):
+    """
+    A una matriz de m x n (con m >= n)
+    tol la tolerancia con la que se filtran elementos nulos en R
+    retorna_nops permite (opcionalmente) retornar el numero de operaciones realizado
+    retorna matrices Q y R calculadas con Gram Schmidt (y como tercer argumento opcional, el numero de operaciones).
+    Si la matriz A tiene dimensiones m < n, debe retornar None
+    """
+    m,n = A.shape
+    if(m < n):
+      return None
+  
+    Q = np.zeros((m, n))
+    R = np.zeros((n, n))
+    
+    for i in range(n):
+        v = A[:, i].copy()
+        for j in range(i):
+            inner_product = vector_dot(Q[:, j], v)
+            R[j,i] = inner_product
+            v = v - inner_product * Q[:,j]
+        norm_2 = norma(v,2)
+        if norm_2 > tol:
+            R[i,i] = norm_2
+            Q[:,i] = v/norm_2
+        else:
+            R[i,i] = 0.0
+            Q[:,i] = 0.0
+
+    return Q,R
+
+
+def QR_con_HH(A,tol=1e-12):
+    """
+    A una matriz de m x n (m>=n)
+    tol la tolerancia con la que se filtran elementos nulos en R
+    retorna matrices Q y R calculadas con reflexiones de Householder
+    Si la matriz A no cumple m>=n, debe retornar None
+    """
+    m,n = A.shape
+    if(m < n):
+      return None
+    Q = np.eye(m)
+    R = A.copy()
+    for i in range(0, n - 1):
+      norm_2 = norma(R[i:, i],2)
+      if(norm_2 < tol):
+        R[i:, i] = 0
+        continue
+      aux = np.zeros_like(R[i:, i])
+      aux[0] = norm_2
+      v =  R[i:, i] - aux
+      u = v / norma(v,2)
+      Hi = Hi = np.eye(m - i) - 2 * outer(u, u)
+
+      Hi = np.block([[np.eye(i), np.zeros((i, m-i))], [np.zeros((m-i, i)), Hi]])
+      R = np.dot(Hi, R)
+      Q = np.dot(Q, Hi.T)
+
+    return Q,R
+
+
+def calculaQR(A,metodo='RH',tol=1e-12):
+    """
+    A una matriz de n x n
+    tol la tolerancia con la que se filtran elementos nulos en R
+    metodo = ['RH','GS'] usa reflectores de Householder (RH) o Gram Schmidt (GS) para realizar la factorizacion
+    retorna matrices Q y R calculadas con Gram Schmidt (y como tercer argumento opcional, el numero de operaciones)
+    Si el metodo no esta entre las opciones, retorna None
+    """
+    if(metodo == 'RH'):
+      return QR_con_HH(A,tol)
+    elif(metodo == 'GS'):
+      return QR_con_GS(A,tol)
+    else:
+      return None
+
+# Funciones del laboratorio 6
+
+def metpot2k(A, tol=1e-15, K=1000):
+    n = A.shape[0]
+    vectorResultante = np.random.rand(n)
+    vectorResultante = vectorResultante / norma(vectorResultante, 2)
+    cuentas = 0
+
+    for i in range(int(K)):
+        Av = matmulti(A, vectorResultante)
+        vectorSiguiente = Av / norma(Av, 2)
+        cuentas += 1
+
+        dif = vectorSiguiente - vectorResultante
+        if norma(dif, 2) < tol:
+            break
+        vectorResultante = vectorSiguiente
+
+    Av = matmulti(A, vectorSiguiente)
+    autovalor = vector_dot(vectorSiguiente, Av) / vector_dot(vectorSiguiente, vectorSiguiente)
+    return vectorSiguiente, autovalor, cuentas
+
+def diagRH(A, tol=1e-15, K=1000):
+    n = A.shape[0]
+    v1, lambda1, k = metpot2k(A, tol, K)
+
+    e1 = np.zeros_like(v1)
+    e1[0] = 1
+
+    sign = 1.0 if v1[0] >= 0 else -1.0
+    norm_v1 = norma(v1, 2)
+    w = v1 + sign * norm_v1 * e1
+    nw = norma(w, 2)
+
+    if nw < tol:
+        H_v1 = np.eye(n)
+    else:
+        w = w / nw
+
+        H_v1 = np.eye(n)
+        for i in range(n):
+            for j in range(n):
+                H_v1[i, j] -= 2 * w[i] * w[j]
+
+    if n == 1:
+        S = H_v1
+        D = matmulti(matmulti(H_v1, A), H_v1)
+        return S, D
+    else:
+        B = matmulti(matmulti(H_v1, A), H_v1)
+        A_prima = B[1:, 1:]
+        S_prima, D_prima = diagRH(A_prima, tol, K)
+
+        D = np.zeros((n, n))
+        D[0, 0] = lambda1
+        D[1:, 1:] = D_prima
+
+        S = np.eye(n)
+        S[1:, 1:] = S_prima
+        S = matmulti(H_v1, S)
+        return S, D
+    
+
+# Funciones del laboratorio 7
+
+def transiciones_al_azar_continuas(n):
+    """
+    n: cantidad de filas (columnas) de la matriz de transición.
+    Retorna matriz T de n x n normalizada por columnas, con entradas al azar en [0,1].
+    """
+    T = np.random.random((n, n))
+
+    for j in range(n):
+        T[:, j] = normaliza([T[:, j]], 1)[0]
+
+    return T
+
+def transiciones_al_azar_uniformes(n,thres):
+    """
+    n la cantidad de filas (columnas) de la matriz de transición.
+    thres probabilidad de que una entrada sea distinta de cero.
+    Retorna matriz T de n x n normalizada por columnas.
+    El elemento i,j es distinto de cero si el número generado al azar para i,j es menor o igual a thres.
+    Todos los elementos de la columna $j$ son iguales
+    (a 1 sobre el número de elementos distintos de cero en la columna).
+    """
+
+    T = np.random.random((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            if T[i, j] <= thres:
+                T[i, j] = 1.0
+            else:
+                T[i, j] = 0.0
+
+    for j in range(n):
+        col = T[:, j]
+        if np.sum(col) == 0:
+            col[:] = 1.0 / n # Si la columna me queda de 0 lleno todo de 1/n
+        else:
+            col = normaliza([col], 1)[0]
+        T[:, j] = col
+
+    return T
+
+def nucleo(A,tol=1e-15):
+    """
+    A una matriz de m x n
+    tol la tolerancia para asumir que un vector esta en el nucleo.
+    Calcula el nucleo de la matriz A diagonalizando la matriz traspuesta(A) * A (* la multiplicacion matricial), usando el medodo diagRH. El nucleo corresponde a los autovectores de autovalor con modulo <= tol.
+    Retorna los autovectores en cuestion, como una matriz de n x k, con k el numero de autovectores en el nucleo.
+    """
+
+    ATA = matmulti(transpuesta(A),A)
+
+    resultado = diagRH(ATA, tol=tol)
+    if resultado is None:
+        return None
+
+    S, D = resultado
+
+    autovalores = np.diag(D)
+    indices_nucleo = np.where(np.abs(autovalores) <= tol)[0]
+
+
+    if len(indices_nucleo) == 0:
+        return np.array([])
+
+    return S[:, indices_nucleo]
+
+def crea_rala(listado,m_filas,n_columnas,tol=1e-15):
+    """
+    Recibe una lista listado, con tres elementos: lista con indices i, lista con indices j, y lista con valores A_ij de la matriz A. Tambien las dimensiones de la matriz a traves de m_filas y n_columnas. Los elementos menores a tol se descartan.
+    Idealmente, el listado debe incluir unicamente posiciones correspondientes a valores distintos de cero. Retorna una lista con:
+    - Diccionario {(i,j):A_ij} que representa los elementos no nulos de la matriz A. Los elementos con modulo menor a tol deben descartarse por default.
+    - Tupla (m_filas,n_columnas) que permita conocer las dimensiones de la matriz.
+    """
+    matriz_rala = {}
+
+    if  len(listado) == 0:
+        return matriz_rala, (m_filas, n_columnas)
+
+    lista_i, lista_j, lista_valores = listado
+    n = len(lista_valores)
+
+    for k in range(n):
+        i = lista_i[k]
+        j = lista_j[k]
+        val = lista_valores[k]
+        if abs(val) >= tol:
+            matriz_rala[(i, j)] = val
+
+    return matriz_rala, (m_filas, n_columnas)
+
+
+
+def multiplica_rala_vector(A,v):
+    """
+    Recibe una matriz rala creada con crea_rala y un vector v.
+    Retorna un vector w resultado de multiplicar A con v
+    """
+    ADic, dims = A
+    n, m = dims
+
+    w = np.zeros(m)
+
+    for (i, j), val in ADic.items():
+        w[i] += val * v[j]
+
+    return w
+
+
+
+def es_markov(T,tol=1e-6):
+    """
+    T una matriz cuadrada.
+    tol la tolerancia para asumir que una suma es igual a 1.
+    Retorna True si T es una matriz de transición de Markov (entradas no negativas y columnas que suman 1 dentro de la tolerancia), False en caso contrario.
+    """
+    n = T.shape[0]
+    for i in range(n):
+        for j in range(n):
+            if T[i,j]<0:
+                return False
+    for j in range(n):
+        suma_columna = sum(T[:,j])
+        if np.abs(suma_columna - 1) > tol:
+            return False
+    return True
+
+def es_markov_uniforme(T,thres=1e-6):
+    """
+    T una matriz cuadrada.
+    thres la tolerancia para asumir que una entrada es igual a cero.
+    Retorna True si T es una matriz de transición de Markov uniforme (entradas iguales a cero o iguales entre si en cada columna, y columnas que suman 1 dentro de la tolerancia), False en caso contrario.
+    """
+    if not es_markov(T,thres):
+        return False
+    # cada columna debe tener entradas iguales entre si o iguales a cero
+    m = T.shape[1]
+    for j in range(m):
+        non_zero = T[:,j][T[:,j] > thres]
+        # all close
+        close = all(np.abs(non_zero - non_zero[0]) < thres)
+        if not close:
+            return False
+    return True
+
+
+def esNucleo(A,S,tol=1e-5):
+    """
+    A una matriz m x n
+    S una matriz n x k
+    tol la tolerancia para asumir que un vector esta en el nucleo.
+    Retorna True si las columnas de S estan en el nucleo de A (es decir, A*S = 0. Esto no chequea si es todo el nucleo
+    """
+    for col in S.T:
+        res = A @ col
+        print(res)
+        if not np.allclose(res,np.zeros(A.shape[0]), atol=tol):
+            return False
+    return True
+
+# Funciones del laboratorio 8
+
+def svd_reducida(A,k="max",tol=1e-15):
+    """
+    A la matriz de interes (de m x n)
+    k el numero de valores singulares (y vectores) a retener.
+    tol la tolerancia para considerar un valor singular igual a cero
+    Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
+    """
+    m, n = A.shape
+    if k == "max":
+        k = min(A.shape)
+    if m > n:
+      ATA = matmulti(transpuesta(A),A)
+      return obtenerSVD(A,ATA, k, tol=tol, Mmayor=True)
+
+    else:
+      AAT = matmulti(A,transpuesta(A))
+      return obtenerSVD(A,AAT, k, tol=tol, Mmayor=False)
+
+
+
+def obtenerSVD(A,M,k,tol=1e-15,Mmayor = True):
+      resultado = diagRH(M, tol=tol)
+      if resultado is None:
+          return None
+      S, D = resultado
+      S = gen_Q(S,tol=tol)
+      autovalores = np.diag(D).copy()
+      for i in range(len(autovalores)):
+          if autovalores[i] < tol:
+              autovalores[i] = 0
+      valores_singulares = np.sqrt(autovalores)
+      valores_singularesInv = np.zeros(len(valores_singulares))
+      for i in range(len(valores_singulares)):
+          if valores_singulares[i] == 0:
+              valores_singularesInv[i] = 0
+              S[:,i] = np.zeros(S.shape[ 1])
+          else:
+              valores_singularesInv[i] = 1/valores_singulares[i]
+      valores_singulares = np.diag(valores_singulares)
+
+
+      if Mmayor:
+        B = matmulti(A, S)
+        U = gen_Q(B, tol=tol)
+        valores_singulares = valores_singulares[:k]
+        V = S[:, :k]
+        U = U[:, :k]
+        return U,np.diag(valores_singulares),V
+      else:
+        B = matmulti(transpuesta(A),S)
+        V = gen_Q(B, tol=tol)
+        valores_singulares = valores_singulares[:k]
+        U = S[:, :k]
+        V = V[:, :k]
+        return U,np.diag(valores_singulares),V
+
 
 
 ####################################
