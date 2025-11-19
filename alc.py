@@ -23,8 +23,6 @@ Autores:
 Materia: Álgebra Lineal Computacional (UBA)
 """
 
-from imports import np, plt
-import os
 
 ####################################
 # 1. LECTURA DE DATOS
