@@ -181,10 +181,28 @@ def pinvHouseHolder(Q, R, Y):
     Retorna:
         W : pesos que minimizan ||Y - W X||²
     """
-    R_T = lb1.transpuesta(R)
-    R_T_inversa = lb4.inversa(R_T)
-    X_p = lb1.matmulti(Q,R_T_inversa)
-    return lb1.matmulti(Y, X_p)
+    # Q R = X.T con  X de dim {n x p}, n < p por lo tanto X.T es de dim {p x n} y Q es de dim {p x p} y R de dim {p x n}
+    # Luego X+ = (X.T X)^{-1} X.T = (R.T R)^{-1} R.T Q.T = M_inv R.T Q.T, donde M_inv = (R.T R)^{-1}
+
+    R_transpuesta = lb1.transpuesta(R)
+
+    M = lb1.matmulti(R_transpuesta, R)  # M = R.T R
+
+    L,LT= descCholesky(M)
+    M_inv = np.zeros_like(M)
+
+    for i in range(M.shape[0]):
+
+        b = np.zeros(M.shape[0])
+        b[i] = 1
+        y = lb4.res_tri(L, b, inferior=True)
+        x = lb4.res_tri(LT, y, inferior=False) 
+        M_inv[:, i] = x
+
+    X_plus = lb1.matmulti((lb1.matmulti(M_inv, lb1.transpuesta(R))), lb1.transpuesta(Q))  # X+ = M_inv R.T Q.T
+    W = lb1.matmulti(Y, lb1.transpuesta(X_plus))
+
+    return W, X_plus
 
 
 def pinvGramSchmidt(Q, R, Y):
