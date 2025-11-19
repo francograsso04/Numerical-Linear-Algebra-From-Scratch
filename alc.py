@@ -18,7 +18,7 @@ Autores:
 -Franco V. Grasso 132/23
 -Ramiro Arbetman 1307/24
 -Nicolas Marchetto 581/23
-- Agregar
+-Axel Campoverde 258/22
 
 Materia: Álgebra Lineal Computacional (UBA)
 """
