@@ -816,33 +816,31 @@ def pinvEcuacionesNormales(X,L,Y):
     """
     n, p = X.shape
     rangoX = rango(X)
-    LT = lb1.transpuesta(L)
+    LT = transpuesta(L)
 
     if rangoX == p and n > p:
-        XT = lb1.transpuesta(X)
+        XT = transpuesta(X)
 
         U = np.zeros_like(XT)
         for col in range(n):
             b = XT[:, col]
-            z = lb4.res_tri(L, b, inferior=True)
-            u = lb4.res_tri(LT, z, inferior=False)
+            z = res_tri(L, b, inferior=True)
+            u = res_tri(LT, z, inferior=False)
             U[:, col] = u
 
-        W = lb1.matmulti(Y, U)
-
+        W = matmulti(Y, U)
     elif rangoX == n and n < p:
         V = np.zeros_like(XT)
         for col in range(n):
             b = X[:, col]
-            z = lb4.res_tri(L, b, inferior=True)
-            v = lb4.res_tri(LT, z, inferior=False)
+            z = res_tri(L, b, inferior=True)
+            v = res_tri(LT, z, inferior=False)
             V[:, col] = v
 
-        W = lb1.matmulti(Y, lb1.transpuesta(V))
-
+        W = matmulti(Y, transpuesta(V))
     elif rangoX == n and n == p:
-        XInv = lb4.inversa(X)
-        W = lb1.matmulti(Y, XInv)
+        XInv = inversa(X)
+        W = matmulti(Y, XInv)
 
     return W
 
@@ -890,9 +888,9 @@ def pinvHouseHolder(Q, R, Y):
     # Q R = X.T con  X de dim {n x p}, n < p por lo tanto X.T es de dim {p x n} y Q es de dim {p x p} y R de dim {p x n}
     # Luego X+ = (X.T X)^{-1} X.T = (R.T R)^{-1} R.T Q.T = M_inv R.T Q.T, donde M_inv = (R.T R)^{-1}
 
-    R_transpuesta = lb1.transpuesta(R)
+    R_transpuesta = transpuesta(R)
 
-    M = lb1.matmulti(R_transpuesta, R)  # M = R.T R
+    M = matmulti(R_transpuesta, R)  # M = R.T R
 
     L,LT= descCholesky(M)
     M_inv = np.zeros_like(M)
@@ -901,12 +899,12 @@ def pinvHouseHolder(Q, R, Y):
 
         b = np.zeros(M.shape[0])
         b[i] = 1
-        y = lb4.res_tri(L, b, inferior=True)
-        x = lb4.res_tri(LT, y, inferior=False) 
+        y = res_tri(L, b, inferior=True)
+        x = res_tri(LT, y, inferior=False) 
         M_inv[:, i] = x
 
-    X_plus = lb1.matmulti((lb1.matmulti(M_inv, lb1.transpuesta(R))), lb1.transpuesta(Q))  # X+ = M_inv R.T Q.T
-    W = lb1.matmulti(Y, lb1.transpuesta(X_plus))
+    X_plus = matmulti((matmulti(M_inv, transpuesta(R))), transpuesta(Q))  # X+ = M_inv R.T Q.T
+    W = matmulti(Y, transpuesta(X_plus))
 
     return W, X_plus
 
@@ -933,13 +931,13 @@ def pinvGramSchmidt(Q, R, Y):
     pX_T = np.zeros((n, p))
 
     for i in range(n):
-        pX_T[:, i] = lb4.res_tri(R, Q[i, :], inferior=False)
+        pX_T[:, i] = res_tri(R, Q[i, :], inferior=False)
         
-    pX = lb1.transpuesta(pX_T)
+    pX = transpuesta(pX_T)
     
     # Calculamos W = YX+
     # Si Y es de dims {2xp}, y X+ de {pxn} -> dim (W) = {2xn}
-    W = lb1.matmulti(Y, pX)
+    W = matmulti(Y, pX)
     
     return W
 
@@ -959,19 +957,19 @@ def esPseudoInversa(X, pX, tol=1e-8):
     """
 
     # Condición 1: X * pX * X ≈ X
-    if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(X , pX) , X), X, tol):
+    if not sonIguales(matmulti(matmulti(X , pX) , X), X, tol):
         return False
 
     # Condición 2: pX * X * pX ≈ pX
-    if not lb1.sonIguales(lb1.matmulti(lb1.matmulti(pX ,X) , pX), pX, tol):
+    if not sonIguales(matmulti(matmulti(pX ,X) , pX), pX, tol):
         return False
 
     # Condición 3: (X * pX)^T ≈ X * pX
-    if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(X,pX)), lb1.matmulti(X,pX), tol):
+    if not sonIguales(transpuesta(matmulti(X,pX)), matmulti(X,pX), tol):
         return False
 
     # Condición 4: (pX * X)^T ≈ pX * X
-    if not lb1.sonIguales(lb1.transpuesta(lb1.matmulti(pX,X)), lb1.matmulti(pX,X), tol):
+    if not sonIguales(transpuesta(matmulti(pX,X)), matmulti(pX,X), tol):
         return False
 
     return True
@@ -1012,12 +1010,12 @@ def obtenerL(X):
     rangoX = rango(X)
 
     if rangoX == p and n > p:
-        XTX = lb1.matmulti(lb1.transpuesta(X), X)
+        XTX = matmulti(transpuesta(X), X)
         L,_ = descCholesky(XTX)
         return L
 
     elif rangoX == n and n < p:
-        XXT = lb1.matmulti(X, lb1.transpuesta(X))
+        XXT = matmulti(X, transpuesta(X))
         L,_  = descCholesky(XXT)
         return L
 
@@ -1026,9 +1024,9 @@ def descCholesky(A):
     Calcula la descomposición de Cholesky A = L L^T
     usando la LDV si A es simétrica definida positiva.
     """
-    Lprima, D, _ = lb4.calculaLDV(A)
+    Lprima, D, _ = calculaLDV(A)
 
-    if not lb4.esSDP(A):
+    if not esSDP(A):
         return None, None
 
     if Lprima is None or D is None:
@@ -1038,9 +1036,9 @@ def descCholesky(A):
     for i in range(D.shape[0]):
         raizD[i, i] = np.sqrt(D[i, i])
 
-    L = lb1.matmulti(Lprima, raizD)
+    L = matmulti(Lprima, raizD)
 
-    LT = lb1.transpuesta(L)
+    LT = transpuesta(L)
 
     return L, LT
 
@@ -1049,7 +1047,7 @@ def rango(A):
     Retorna el rango de una matriz a partir de la cantidad de valores
     singulares distintos de 0
     """
-    _,D,_ = lb8.svd_reducida(A)
+    _,D,_ = svd_reducida(A)
     rango = sum(1 for d in D if d > 0)
     return rango
 
@@ -1149,13 +1147,13 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
 
     # 4) Cálculo de la pseudoinversa reducida:
     #     X⁺ = V₁ Σ₁⁻¹ U₁ᵀ
-    producto = lb1.matmulti(V1, S1_inversa)          # V₁ Σ₁⁻¹
-    pseudo_inv = lb1.matmulti(producto, U1_T) # V₁ Σ₁⁻¹ U₁ᵀ
+    producto = matmulti(V1, S1_inversa)          # V₁ Σ₁⁻¹
+    pseudo_inv = matmulti(producto, U1_T) # V₁ Σ₁⁻¹ U₁ᵀ
 
 
     # 5) Cálculo final de W:
     #     W = Y X⁺ = Y (V₁ Σ₁⁻¹ U₁ᵀ)
-    W = lb1.matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
+    W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
 
