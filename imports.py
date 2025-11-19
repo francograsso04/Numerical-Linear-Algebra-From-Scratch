@@ -8,4 +8,6 @@ import labos.Labo5 as lb5
 import labos.Labo6 as lb6
 import labos.Labo7 as lb7
 import labos.Labo8 as lb8
-
+import  pandas  as pd
+from sklearn.metrics import confusion_matrix
+import os

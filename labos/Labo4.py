@@ -1,4 +1,4 @@
-from imports import np, plt,lb1
+from imports import np,lb1
 
 def calculaLU(A):
     """
@@ -20,7 +20,7 @@ def calculaLU(A):
 
     for k in range(n-1):
         pivot = U[k, k]
-        if np.abs(pivot) < 1e-08: #Si todos los pivotes de U son distintos a 0, det(U) != 0
+        if np.abs(pivot) < 1e-08: 
             return None, None, 0
 
         for i in range(k+1, n):
@@ -29,7 +29,7 @@ def calculaLU(A):
                 U[i, j] -= L[i, k] * U[k, j]
                 nops += 2
                 
-    if np.abs(U[n-1, n-1]) < 1e-08: #Verificamos también para el último pivot
+    if np.abs(U[n-1, n-1]) < 1e-08: 
          return None, None, 0
 
     return L, U, nops

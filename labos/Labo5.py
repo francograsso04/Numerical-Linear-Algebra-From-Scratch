@@ -1,5 +1,8 @@
-from imports import np, plt,lb1,lb3
+from imports import np,lb1,lb3
 def gen_Q(A, tol=1e-12):
+    '''
+    Ortonormaliza las columnas de A
+    '''
     n, m = A.shape
     k = min(n, m)
     Q = np.zeros((n, k))

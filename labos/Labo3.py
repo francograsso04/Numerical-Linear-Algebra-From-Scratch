@@ -1,4 +1,4 @@
-from imports import np, plt
+from imports import np
 def norma(unVectorASacarNorma, unValorDeNorma):
     if unValorDeNorma == 1:
         return np.sum(np.abs(unVectorASacarNorma))
@@ -18,17 +18,17 @@ def normaliza(X,p):
   return Y
 
 def normaMatMC(A, q, p, Np):
-  max = 0.0;
+  max = 0.0
   X = [np.random.rand(A.shape[0]) for _ in range(Np)]
   x_normalize = normaliza(X, p);
-  best_x = None;
+  best_x = None
   for i in range(Np):
-    y = A @ x_normalize[i];
-    norm_q = norma(y, q);
+    y = A @ x_normalize[i]
+    norm_q = norma(y, q)
     if norm_q > max:
-      max = norm_q;
-      best_x = x_normalize[i];
-  return (max, best_x);
+      max = norm_q
+      best_x = x_normalize[i]
+  return (max, best_x)
 
 def normaInfinito(unaMatrizANormalizar):
   norma = 0

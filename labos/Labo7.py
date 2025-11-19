@@ -1,4 +1,4 @@
-from imports import np, plt,lb3,lb1,lb6
+from imports import np,lb3,lb1,lb6
 def transiciones_al_azar_continuas(n):
     """
     n: cantidad de filas (columnas) de la matriz de transición.
@@ -56,7 +56,7 @@ def nucleo(A,tol=1e-15):
 
     S, D = resultado
 
-    autovalores = np.diag(D) #Tomo los elementos de la diagonal
+    autovalores = np.diag(D)
     indices_nucleo = np.where(np.abs(autovalores) <= tol)[0]
 
 

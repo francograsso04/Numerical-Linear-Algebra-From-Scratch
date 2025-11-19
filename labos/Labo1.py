@@ -1,4 +1,4 @@
-from imports import np, plt
+from imports import np
 
 def error(x, y):
     y64 = np.float64(y)   # convertir y a float64
@@ -51,8 +51,7 @@ def vector_dot(v, w):
 
 def outer(v, w):
     """
-    Calcula el producto externo entre dos vectores : 
-    devuelve una matriz donde M[i,j] = v[i] * w[j]
+    Calcula el producto externo entre dos vectores 
     """
     v = np.array(v)
     w = np.array(w)
@@ -65,6 +64,9 @@ def outer(v, w):
     return M
 
 def transpuesta(A):
+    """
+    Transpone una matriz
+    """
     filas, columnas = A.shape
     ATranspuesta = np.zeros((columnas, filas))
     for i in range(filas):

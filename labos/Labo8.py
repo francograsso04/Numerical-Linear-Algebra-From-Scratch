@@ -1,4 +1,4 @@
-from imports import np, plt,lb5,lb1,lb6
+from imports import np,lb5,lb1,lb6
 def svd_reducida(A,k="max",tol=1e-15):
     """
     A la matriz de interes (de m x n)
