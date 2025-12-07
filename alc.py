@@ -51,8 +51,7 @@ def matricesIguales(unaMatriz,otraMatriz):
       if not sonIguales(unaMatriz[i,j], otraMatriz[i,j]):
         return False
   return True
-def sonIguales(x, y, atol=1e-08):
-    return np.allclose(error(x, y), 0, atol=atol)
+
 
 def matmulti(A, B):
     """
@@ -79,8 +78,9 @@ def vector_dot(v, w):
     """
     v = np.array(v)
     w = np.array(w)
-    suma = sum(v[i] * w[i] for i in range(len(v)))
-    return suma
+
+    n = min(len(v), len(w))
+    return sum(v[i] * w[i] for i in range(n))
 
 def outer(v, w):
     """
@@ -107,6 +107,47 @@ def transpuesta(A):
             ATranspuesta[j, i] = A[i, j]
     return ATranspuesta
 
+def inversa(A):
+    """
+    Calcula la inversa de una matriz cuadrada A usando eliminación gaussiana.
+    """
+    n = A.shape[0]
+
+    AI = np.zeros((n, 2*n))
+    for i in range(n):
+        for j in range(n):
+            AI[i, j] = A[i, j]
+        AI[i, n+i] = 1.0  
+
+    for i in range(n):
+        
+        if AI[i, i] == 0:
+            for r in range(i+1, n):
+                if AI[r, i] != 0:
+                    AI[[i, r]] = AI[[r, i]]  
+                    break
+            else:
+                return None #Matriz singular
+
+     
+        pivot = AI[i, i]
+        for j in range(2*n):
+            AI[i, j] /= pivot
+
+   
+        for j in range(n):
+            if j != i:
+                factor = AI[j, i]
+                for k in range(2*n):
+                    AI[j, k] -= factor * AI[i, k]
+
+
+    Inv = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            Inv[i, j] = AI[i, n+j]
+
+    return Inv
 
 # Funciones del laboratorio 2
 
@@ -126,7 +167,7 @@ def escala(factoresEscala):
 def rota_y_escala(angulo, factoresEscala):
     matrizRotacion = rota(angulo)
     matrizEscala = escala(factoresEscala)
-    return matrizEscala @ matrizRotacion
+    return matmulti(matrizEscala,matrizRotacion)
 
 def afin(angulo, factoresEscala, vector):
     matrizRotaYEscala = rota_y_escala(angulo,factoresEscala)
@@ -144,7 +185,9 @@ def trans_afin(vector, angulo, factoresEscala, vectorDeTraslacion):
 
     return vectorTransformacion[:2]          # Tomo solo los 2 primeros numeros
 
+
 # Funciones del laboratorio 3
+
 
 def norma(unVectorASacarNorma, unValorDeNorma):
     if unValorDeNorma == 1:
@@ -167,10 +210,10 @@ def normaliza(X,p):
 def normaMatMC(A, q, p, Np):
   max = 0.0
   X = [np.random.rand(A.shape[0]) for _ in range(Np)]
-  x_normalize = normaliza(X, p);
+  x_normalize = normaliza(X, p)
   best_x = None
   for i in range(Np):
-    y = A @ x_normalize[i]
+    y = matmulti(A,x_normalize[i])
     norm_q = norma(y, q)
     if norm_q > max:
       max = norm_q
@@ -186,6 +229,7 @@ def normaInfinito(unaMatrizANormalizar):
       suma += abs(unaMatrizANormalizar[i, j])
     if suma > 0:
       norma = suma
+
   return norma
 
 def norma1(unaMatrizANormalizar):
@@ -197,24 +241,27 @@ def norma1(unaMatrizANormalizar):
         suma += abs(unaMatrizANormalizar[i, j])
       if suma > 0:
         norma = suma
+
   return norma
 
 
 def normaExacta(unaMatrizANormalizar, p = [1, 'inf']):
-
+#if isinstance(p, list):
   if p == [1, 'inf']:
     norma_1 = norma1(unaMatrizANormalizar)
     norma_inf = normaInfinito(unaMatrizANormalizar)
     return (norma_1,norma_inf)
+#else:
   elif p == 1:
     return norma1(unaMatrizANormalizar)
   elif p == 'inf':
     return normaInfinito(unaMatrizANormalizar)
+
   return None
 
 
 def condMC(A, p, Np=1000):
-  inv_A = np.linalg.inv(A)
+  inv_A = inversa(A)
   return normaMatMC(A, p, p, Np)[0] * normaMatMC(inv_A, p, p, Np)[0]
 
 
@@ -222,9 +269,9 @@ def condExacta(unaMatriz, unValorDeNorma):
   if unValorDeNorma not in [1, 'inf'] and unValorDeNorma != [1, 'inf']:
     return None
 
-  inversa = np.linalg.inv(unaMatriz)
+  inv = inversa(unaMatriz)
   norma = normaExacta(unaMatriz, unValorDeNorma)
-  normaInv = normaExacta(inversa, unValorDeNorma)
+  normaInv = normaExacta(inv, unValorDeNorma)
   return norma * normaInv
 
 # Funciones del laboratorio 4
@@ -330,7 +377,11 @@ def esSimetrica(A):
 
 
 def la_diagonal_es_positiva(A):
-  return np.all(np.diag(A) > 0)
+    diag = np.diag(A)
+    for x in diag:
+        if x <= 0:
+            return False
+    return True
 
 def esSDP(A,atol=1e-8):
     """
@@ -350,9 +401,6 @@ def esSDP(A,atol=1e-8):
 # Funciones del laboratorio 5
 
 def gen_Q(A, tol=1e-12):
-    '''
-    Ortonormaliza las columnas de A
-    '''
     n, m = A.shape
     k = min(n, m)
     Q = np.zeros((n, k))
@@ -368,7 +416,8 @@ def gen_Q(A, tol=1e-12):
             Q[:, i] = np.zeros(n)
 
     return Q
-    
+
+
 def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     """
     A una matriz de m x n (con m >= n)
@@ -380,10 +429,10 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     m,n = A.shape
     if(m < n):
       return None
-  
+
     Q = np.zeros((m, n))
     R = np.zeros((n, n))
-    
+
     for i in range(n):
         v = A[:, i].copy()
         for j in range(i):
@@ -400,7 +449,6 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
 
     return Q,R
 
-
 def QR_con_HH(A,tol=1e-12):
     """
     A una matriz de m x n (m>=n)
@@ -408,27 +456,30 @@ def QR_con_HH(A,tol=1e-12):
     retorna matrices Q y R calculadas con reflexiones de Householder
     Si la matriz A no cumple m>=n, debe retornar None
     """
-    m,n = A.shape
-    if(m < n):
-      return None
-    Q = np.eye(m)
+    m, n = A.shape
+    if m < n:
+        return None
+
     R = A.copy()
-    for i in range(0, n - 1):
-      norm_2 = norma(R[i:, i],2)
-      if(norm_2 < tol):
-        R[i:, i] = 0
-        continue
-      aux = np.zeros_like(R[i:, i])
-      aux[0] = norm_2
-      v =  R[i:, i] - aux
-      u = v / norma(v,2)
-      Hi = Hi = np.eye(m - i) - 2 * outer(u, u)
+    Q = np.eye(m)
 
-      Hi = np.block([[np.eye(i), np.zeros((i, m-i))], [np.zeros((m-i, i)), Hi]])
-      R = np.dot(Hi, R)
-      Q = np.dot(Q, Hi.T)
+    for i in range(n):
+        x = R[i:, i]
+        norm_2 = norma(x, 2)
 
-    return Q,R
+        if norm_2 < tol:
+            continue
+        
+        sign = 1.0 if x[0] >= 0 else -1.0
+        v = x.copy()
+        v[0] += sign * norm_2
+        v = v / norma(v, 2)
+
+        R[i:, i:] -= 2 * outer(v, vector_dot(v.T, R[i:, i:]))
+
+        Q[:, i:] -= 2 * outer(matmulti(Q[:, i:], v), v)
+
+    return Q, R
 
 
 def calculaQR(A,metodo='RH',tol=1e-12):
@@ -445,7 +496,7 @@ def calculaQR(A,metodo='RH',tol=1e-12):
       return QR_con_GS(A,tol)
     else:
       return None
-
+    
 # Funciones del laboratorio 6
 
 def metpot2k(A, tol=1e-15, K=1000):
