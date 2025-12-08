@@ -792,6 +792,7 @@ def obtenerSVD(A, M, k, tol=1e-15, Mmayor=True):
         return U, valores_singulares, V
 
 
+
 ####################################
 # 1. LECTURA DE DATOS
 ####################################
@@ -883,7 +884,7 @@ def pinvEcuacionesNormales(X,L,Y):
     if rangoX == p and n > p:
         XT = transpuesta(X)
 
-        U = np.zeros_like(XT)
+        U = np.zeros((p,n))
         for col in range(n):
             b = XT[:, col]
             z = res_tri(L, b, inferior=True)
@@ -892,14 +893,14 @@ def pinvEcuacionesNormales(X,L,Y):
 
         W = matmulti(Y, U)
     elif rangoX == n and n < p:
-        V = np.zeros_like(XT)
+        V = np.zeros((p, n))  
         for col in range(n):
             b = X[:, col]
             z = res_tri(L, b, inferior=True)
             v = res_tri(LT, z, inferior=False)
-            V[:, col] = v
+            V[col, :] = v
 
-        W = matmulti(Y, transpuesta(V))
+        W = matmulti(Y, V)  
     elif rangoX == n and n == p:
         XInv = inversa(X)
         W = matmulti(Y, XInv)
@@ -1086,10 +1087,10 @@ def descCholesky(A):
     Calcula la descomposición de Cholesky A = L L^T
     usando la LDV si A es simétrica definida positiva.
     """
-    Lprima, D, _ = calculaLDV(A)
-
     if not esSDP(A):
         return None, None
+
+    Lprima, D, _ = calculaLDV(A)
 
     if Lprima is None or D is None:
         return None, None
@@ -1218,6 +1219,9 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
+
+
+
 
 
 
