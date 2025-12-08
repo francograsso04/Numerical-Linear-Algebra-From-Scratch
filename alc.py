@@ -107,7 +107,7 @@ def transpuesta(A):
             ATranspuesta[j, i] = A[i, j]
     return ATranspuesta
 
-def inversa(A):
+def inversaGauss(A):
     """
     Calcula la inversa de una matriz cuadrada A usando eliminación gaussiana.
     """
@@ -261,7 +261,7 @@ def normaExacta(unaMatrizANormalizar, p = [1, 'inf']):
 
 
 def condMC(A, p, Np=1000):
-  inv_A = inversa(A)
+  inv_A = inversaGauss(A)
   return normaMatMC(A, p, p, Np)[0] * normaMatMC(inv_A, p, p, Np)[0]
 
 
@@ -269,7 +269,7 @@ def condExacta(unaMatriz, unValorDeNorma):
   if unValorDeNorma not in [1, 'inf'] and unValorDeNorma != [1, 'inf']:
     return None
 
-  inv = inversa(unaMatriz)
+  inv = inversaGauss(unaMatriz)
   norma = normaExacta(unaMatriz, unValorDeNorma)
   normaInv = normaExacta(inv, unValorDeNorma)
   return norma * normaInv
@@ -790,7 +790,6 @@ def obtenerSVD(A, M, k, tol=1e-15, Mmayor=True):
         U = S
         V = V[:, :k]
         return U, valores_singulares, V
-
 
 
 ####################################
