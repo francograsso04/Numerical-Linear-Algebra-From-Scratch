@@ -743,41 +743,53 @@ def svd_reducida(A,k="max",tol=1e-15):
 
 
 
-def obtenerSVD(A,M,k,tol=1e-15,Mmayor = True):
-      resultado = diagRH(M, tol=tol)
-      if resultado is None:
-          return None
-      S, D = resultado
-      S = gen_Q(S,tol=tol)
-      autovalores = np.diag(D).copy()
-      for i in range(len(autovalores)):
-          if autovalores[i] < tol:
-              autovalores[i] = 0
-      valores_singulares = np.sqrt(autovalores)
-      valores_singularesInv = np.zeros(len(valores_singulares))
-      for i in range(len(valores_singulares)):
-          if valores_singulares[i] == 0:
-              valores_singularesInv[i] = 0
-              S[:,i] = np.zeros(S.shape[ 1])
-          else:
-              valores_singularesInv[i] = 1/valores_singulares[i]
-      valores_singulares = np.diag(valores_singulares)
+def obtenerSVD(A, M, k, tol=1e-15, Mmayor=True):
 
+    S, D = diagRH(M, tol=tol)
+    S = gen_Q(S, tol=tol)  
 
-      if Mmayor:
-        B = matmulti(A, S)
-        U = gen_Q(B, tol=tol)
-        valores_singulares = valores_singulares[:k]
-        V = S[:, :k]
-        U = U[:, :k]
-        return U,np.diag(valores_singulares),V
+   
+    autovalores = np.diag(D).copy()
+
+    autovaloresAux = []
+    for x in autovalores:
+      if x < 0:
+        autovaloresAux.append(0)
       else:
+        autovaloresAux.append(x)
+    autovalores = np.array(autovaloresAux)
+    valores_singulares = np.sqrt(autovalores)
+
+
+    idxNoCero = []
+    for i in range(len(valores_singulares)):
+      if valores_singulares[i] > tol:
+        idxNoCero.append(i)
+
+    if len(idxNoCero) == 0:
+     
+        return np.zeros((A.shape[0], 0)), np.zeros(0), np.zeros((A.shape[1], 0))
+
+    valores_singulares = valores_singulares[idxNoCero]
+    S = S[:, idxNoCero]
+
+ 
+    k = min(k, len(valores_singulares))
+    valores_singulares = valores_singulares[:k]
+    S = S[:, :k]
+
+    if Mmayor:
+        B = matmulti(A,S)
+        U = gen_Q(B, tol=tol)
+        V = S
+        U = U[:, :k]
+        return U, valores_singulares, V
+    else:
         B = matmulti(transpuesta(A),S)
         V = gen_Q(B, tol=tol)
-        valores_singulares = valores_singulares[:k]
-        U = S[:, :k]
+        U = S
         V = V[:, :k]
-        return U,np.diag(valores_singulares),V
+        return U, valores_singulares, V
 
 
 
@@ -1207,6 +1219,10 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
+
+
+
+
 
 
 
