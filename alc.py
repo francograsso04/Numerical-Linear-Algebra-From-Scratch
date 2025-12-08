@@ -449,37 +449,34 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
 
     return Q,R
 
-def QR_con_HH(A,tol=1e-12):
-    """
-    A una matriz de m x n (m>=n)
-    tol la tolerancia con la que se filtran elementos nulos en R
-    retorna matrices Q y R calculadas con reflexiones de Householder
-    Si la matriz A no cumple m>=n, debe retornar None
-    """
-    m, n = A.shape
+def QR_con_HH(X, tol=1e-12):
+    m, n = X.shape
     if m < n:
         return None
 
-    R = A.copy()
+    R = X.copy()
     Q = np.eye(m)
 
     for i in range(n):
         x = R[i:, i]
-        norm_2 = norma(x, 2)
-
-        if norm_2 < tol:
+        norma_2 = norma(x, 2)
+        if norma_2 < tol:
             continue
-        
+
         sign = 1.0 if x[0] >= 0 else -1.0
         v = x.copy()
-        v[0] += sign * norm_2
+        v[0] += sign * norma_2
         v = v / norma(v, 2)
 
-        R[i:, i:] -= 2 * outer(v, vector_dot(v.T, R[i:, i:]))
+      
+        w = vector_dot(v, R[i:, i:])      
+        R[i:, i:] -= 2 * outer(v, w)
 
-        Q[:, i:] -= 2 * outer(matmulti(Q[:, i:], v), v)
+  
+        z = matmulti(Q[:, i:] , v)                   
+        Q[:, i:] -= 2 * outer(z, v)
 
-    return Q, R
+    return Q[:, :n], R[:n, :]
 
 
 def calculaQR(A,metodo='RH',tol=1e-12):
@@ -894,7 +891,7 @@ def pinvEcuacionesNormales(X,L,Y):
         W = matmulti(Y, U)
     elif rangoX == n and n < p:
         V = np.zeros((p, n))  
-        for col in range(n):
+        for col in range(p):
             b = X[:, col]
             z = res_tri(L, b, inferior=True)
             v = res_tri(LT, z, inferior=False)
@@ -951,26 +948,24 @@ def pinvHouseHolder(Q, R, Y):
     # Q R = X.T con  X de dim {n x p}, n < p por lo tanto X.T es de dim {p x n} y Q es de dim {p x p} y R de dim {p x n}
     # Luego X+ = (X.T X)^{-1} X.T = (R.T R)^{-1} R.T Q.T = M_inv R.T Q.T, donde M_inv = (R.T R)^{-1}
 
-    R_transpuesta = transpuesta(R)
+  
+    p, n = Q.shape
+    QT = transpuesta(Q)
+    pX_T = np.zeros((n, p))
 
-    M = matmulti(R_transpuesta, R)  # M = R.T R
-
-    L,LT= descCholesky(M)
-    M_inv = np.zeros_like(M)
-
-    for i in range(M.shape[0]):
-
-        b = np.zeros(M.shape[0])
-        b[i] = 1
-        y = res_tri(L, b, inferior=True)
-        x = res_tri(LT, y, inferior=False) 
-        M_inv[:, i] = x
-
-    X_plus = matmulti((matmulti(M_inv, transpuesta(R))), transpuesta(Q))  # X+ = M_inv R.T Q.T
-    W = matmulti(Y, transpuesta(X_plus))
-
-    return W, X_plus
-
+    for i in range(p):
+        qt = QT[:, i]
+        
+        p_t = res_tri(R, qt, False)
+        
+        pX_T[:, i] = p_t
+        
+    pX = transpuesta(pX_T)
+    
+ 
+    W = matmulti(Y, pX)
+    
+    return W
 
 def pinvGramSchmidt(Q, R, Y):
     """
@@ -991,10 +986,15 @@ def pinvGramSchmidt(Q, R, Y):
     # Resolvemos este sistema triangular para cada fila de Q (cada una es una columna de Q.T) para encontrar todas las columnas de (X+).T
 
     p, n = Q.shape
+    QT = transpuesta(Q)
     pX_T = np.zeros((n, p))
 
-    for i in range(n):
-        pX_T[:, i] = res_tri(R, Q[i, :], inferior=False)
+    for i in range(p):
+        qt = QT[:, i]
+        
+        p_t = res_tri(R, qt, False)
+        
+        pX_T[:, i] = p_t
         
     pX = transpuesta(pX_T)
     
@@ -1003,6 +1003,7 @@ def pinvGramSchmidt(Q, R, Y):
     W = matmulti(Y, pX)
     
     return W
+
 
 
 ####################################
@@ -1219,6 +1220,7 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
+
 
 
 
