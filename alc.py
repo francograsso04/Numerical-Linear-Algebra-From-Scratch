@@ -45,12 +45,14 @@ def error_relativo(x, y):
 def sonIguales(x, y, atol=1e-08):
     return np.allclose(error(x, y), 0, atol=atol)
 
-def matricesIguales(unaMatriz,otraMatriz):
-  for i in range(unaMatriz.shape[0]):
-    for j in range(unaMatriz.shape[1]):
-      if not sonIguales(unaMatriz[i,j], otraMatriz[i,j]):
+def matricesIguales(unaMatriz, otraMatriz, tol=1e-12):
+    if unaMatriz.shape != otraMatriz.shape:
         return False
-  return True
+    for i in range(unaMatriz.shape[0]):
+        for j in range(unaMatriz.shape[1]):
+            if abs(unaMatriz[i, j] - otraMatriz[i, j]) > tol:
+                return False
+    return True
 
 
 def matmulti(A, B):
@@ -600,7 +602,7 @@ def transiciones_al_azar_uniformes(n,thres):
 
     return T
 
-def nucleo(A,tol=1e-15):
+def nucleo(A, tol=1e-15):
     """
     A una matriz de m x n
     tol la tolerancia para asumir que un vector esta en el nucleo.
@@ -608,7 +610,7 @@ def nucleo(A,tol=1e-15):
     Retorna los autovectores en cuestion, como una matriz de n x k, con k el numero de autovectores en el nucleo.
     """
 
-    ATA = matmulti(transpuesta(A),A)
+    ATA = matmulti(transpuesta(A), A)
 
     resultado = diagRH(ATA, tol=tol)
     if resultado is None:
@@ -617,13 +619,17 @@ def nucleo(A,tol=1e-15):
     S, D = resultado
 
     autovalores = np.diag(D)
-    indices_nucleo = np.where(np.abs(autovalores) <= tol)[0]
 
+    indices_nucleo = []
+    for i in range(len(autovalores)):
+        if abs(autovalores[i]) <= tol:
+            indices_nucleo.append(i)
 
     if len(indices_nucleo) == 0:
         return np.array([])
 
     return S[:, indices_nucleo]
+
 
 def crea_rala(listado,m_filas,n_columnas,tol=1e-15):
     """
@@ -732,61 +738,36 @@ def svd_reducida(A,k="max",tol=1e-15):
         k = min(A.shape)
     if m > n:
       ATA = matmulti(transpuesta(A),A)
-      return obtenerSVD(A,ATA, k, tol=tol, Mmayor=True)
+      return obtenerSVD(A,ATA, k,m,n, tol=tol, Mmayor=True)
 
     else:
       AAT = matmulti(A,transpuesta(A))
-      return obtenerSVD(A,AAT, k, tol=tol, Mmayor=False)
+      return obtenerSVD(A,AAT, k,m,n, tol=tol, Mmayor=False)
 
-
-
-def obtenerSVD(A, M, k, tol=1e-15, Mmayor=True):
-
-    S, D = diagRH(M, tol=tol)
-    S = gen_Q(S, tol=tol)  
-
-   
-    autovalores = np.diag(D).copy()
-
-    autovaloresAux = []
-    for x in autovalores:
-      if x < 0:
-        autovaloresAux.append(0)
-      else:
-        autovaloresAux.append(x)
-    autovalores = np.array(autovaloresAux)
-    valores_singulares = np.sqrt(autovalores)
-
-
-    idxNoCero = []
-    for i in range(len(valores_singulares)):
-      if valores_singulares[i] > tol:
-        idxNoCero.append(i)
-
-    if len(idxNoCero) == 0:
-     
-        return np.zeros((A.shape[0], 0)), np.zeros(0), np.zeros((A.shape[1], 0))
-
-    valores_singulares = valores_singulares[idxNoCero]
-    S = S[:, idxNoCero]
-
- 
-    k = min(k, len(valores_singulares))
-    valores_singulares = valores_singulares[:k]
-    S = S[:, :k]
-
+def obtenerSVD(A, M, k, m, n, tol=1e-15, Mmayor=True):
+    S, D = diagRH(M, tol)
+    sigma = np.zeros(k)
+    for i in range(k):
+        if D[i][i] <= tol:
+            sigma = sigma[:i]
+            k = i
+            break
+        sigma[i] = np.sqrt(D[i][i])
     if Mmayor:
-        B = matmulti(A,S)
-        U = gen_Q(B, tol=tol)
-        V = S
-        U = U[:, :k]
-        return U, valores_singulares, V
+        V = S[:, :k]
+        U = np.zeros((m, k))
+        for i in range(k):
+            U[:, i] = matmulti(A, V[:, i]) / sigma[i]
+
+        return U, sigma, V
+
     else:
-        B = matmulti(transpuesta(A),S)
-        V = gen_Q(B, tol=tol)
-        U = S
-        V = V[:, :k]
-        return U, valores_singulares, V
+        U = S[:, :k]
+        V = np.zeros((n, k))
+        for i in range(k):
+            V[:, i] = matmulti(transpuesta(A), U[:, i]) / sigma[i]
+
+        return U, sigma, V
 
 
 
@@ -1220,12 +1201,6 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
-
-
-
-
-
-
 
 
 
