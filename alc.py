@@ -895,19 +895,21 @@ def pinvSVD(U, S, V, Y):
     Calcula los pesos W utilizando la pseudo-inversa obtenida por SVD.
 
     Parámetros:
-        U, S, V : matrices de la descomposición SVD propia
+        U, S, V : matrices de la descomposición SVD propia(S es un vector)
         Y       : matriz de targets de entrenamiento
 
     Retorna:
         W = Y @ V @ S⁻¹ @ U.T
     """
 
+    
 
     V, S_inversa, U_transpuesta,rango = calcularPseudoInversa(U, S, V)
 
     W = calculo_W_SVD(V, S_inversa, U_transpuesta,rango, Y)
 
     return W
+
 
 
 
@@ -1104,7 +1106,7 @@ def calcularPseudoInversa(U,S,V):
     Entrada: Descomposicion de valores singulares de una matriz
     Retorna V,S+,U transpuesta que representa la pseudoInversa de A
     """
-
+    S = np.diag(S)
     rango = 0
     U_transpuesta = transpuesta(U)
 
@@ -1119,8 +1121,8 @@ def calcularPseudoInversa(U,S,V):
       if S[i, i] > tol:
         rango += 1
         S_inversa[i, i] = 1 / S[i, i]
-      
-  
+
+
 
 
     # A^+ = V * S^+ * U^T
@@ -1192,8 +1194,6 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta,rango, Y):
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
-
-
 
 
 
