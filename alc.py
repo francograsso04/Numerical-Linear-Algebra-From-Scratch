@@ -889,6 +889,7 @@ def pinvEcuacionesNormales(X,L,Y):
 # 3. DESCOMPOSICIÓN EN VALORES SINGULARES (SVD)
 ####################################
 
+
 def pinvSVD(U, S, V, Y):
     """
     Calcula los pesos W utilizando la pseudo-inversa obtenida por SVD.
@@ -902,9 +903,9 @@ def pinvSVD(U, S, V, Y):
     """
 
 
-    V, S_inversa, U_transpuesta = calcularPseudoInversa(U, S, V)
+    V, S_inversa, U_transpuesta,rango = calcularPseudoInversa(U, S, V)
 
-    W = calculo_W_SVD(V, S_inversa, U_transpuesta, Y)
+    W = calculo_W_SVD(V, S_inversa, U_transpuesta,rango, Y)
 
     return W
 
@@ -1104,7 +1105,7 @@ def calcularPseudoInversa(U,S,V):
     Retorna V,S+,U transpuesta que representa la pseudoInversa de A
     """
 
-
+    rango = 0
     U_transpuesta = transpuesta(U)
 
     filas, columnas = S.shape
@@ -1113,36 +1114,31 @@ def calcularPseudoInversa(U,S,V):
     #Uso tolerancia para no hacer divisiones de numeros muy chiquitos
     #Consultar si se tiene que hacer asi a priori
     tol = 1e-12
+
     for i in range(min(filas, columnas)):
-        if S[i, i] > tol:
-            S_inversa[i, i] = 1 / S[i, i]
+      if S[i, i] > tol:
+        rango += 1
+        S_inversa[i, i] = 1 / S[i, i]
+      
+  
 
 
     # A^+ = V * S^+ * U^T
-    return V, S_inversa, U_transpuesta
+    return V, S_inversa, U_transpuesta,rango
 
 
 
 
-def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
+
+
+def calculo_W_SVD(V,S_inversa,U_transpuesta,rango, Y):
    # El propósito de esta función es comprender el motivo por el cual resulta conveniente
    # emplear la forma "reducida" de la descomposición SVD en el cálculo de la pseudoinversa.
    # Hasta este punto disponemos de las matrices V, S_inversa, U_transpuesta y Y sin ningún tipo de reducción.
    # El objetivo es ir simplificando gradualmente la representación, conservando solo
    # la información relevante para el cálculo de W.
 
-   # 1) Cálculo del rango de la matriz S_inversa:
-   # El rango de S_inversa coincide con la cantidad de valores singulares distintos de cero de X.
-   # Este valor es fundamental, ya que determina cuántas direcciones (o componentes) aportan información útil.
-   # A partir del rango, podemos realizar las particiones necesarias en U y V para
-   # limitar las operaciones únicamente a las dimensiones efectivamente informativas.
-   #
-   # Por ejemplo, si U es una matriz de 1000x1000 pero X tiene solo 100 valores singulares no nulos,
-   # no resulta eficiente operar con las 1000 columnas: basta con conservar las primeras 100,
-   # que contienen toda la información relevante. El resultado obtenido es el mismo,
-   # pero con un costo computacional mucho menor.
-   #
-   # De esta manera, la pseudoinversa puede expresarse como:
+   # La pseudoinversa puede expresarse como:
    #
    #     X⁺ = V Σ⁺ Uᵀ  ≈  V₁ Σ₁⁻¹ U₁ᵀ
    #
@@ -1150,16 +1146,10 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
    # es decir, solo las componentes asociadas a valores singulares distintos de cero.
 
 
-    rango = 0
-    filas_u, columnas_u = np.shape(S_inversa)
-    for i in range(filas_u):
-        for j in range(columnas_u):
-            if (S_inversa[i,j] > 0):
-                rango = rango + 1
 
-    #Ahora la variable rango es la cantidad de elementos > 0 de la diagonal sigma.
+    # Ahora la variable rango es la cantidad de elementos > 0 de la diagonal sigma.
 
-    # 2) Partición de las matrices U y V según el rango:
+    # 1) Partición de las matrices U y V según el rango:
     # Tomamos únicamente las primeras 'rango' columnas o filas necesarias.
 
     V1 = V[:, :rango] # p×r
@@ -1167,7 +1157,7 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     S1_inversa = S_inversa[:rango, :rango] #Te queda rxr
 
 
-    # 3) Justificación de dimensiones:
+    # 2) Justificación de dimensiones:
     # Sabemos que X ∈ ℝ^{n×p}  ⇒  X⁺ ∈ ℝ^{p×n}.
     #
     # La forma reducida de la pseudoinversa es:
@@ -1191,17 +1181,18 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
 
     #Las U2 y V2 no me importan porque son las particiones que se multiplican por los 0's de sigma. No es relevante. Sumaria costo computacional a la funcion
 
-    # 4) Cálculo de la pseudoinversa reducida:
+    # 3) Cálculo de la pseudoinversa reducida:
     #     X⁺ = V₁ Σ₁⁻¹ U₁ᵀ
     producto = matmulti(V1, S1_inversa)          # V₁ Σ₁⁻¹
     pseudo_inv = matmulti(producto, U1_T) # V₁ Σ₁⁻¹ U₁ᵀ
 
 
-    # 5) Cálculo final de W:
+    # 4) Cálculo final de W:
     #     W = Y X⁺ = Y (V₁ Σ₁⁻¹ U₁ᵀ)
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
+
 
 
 
