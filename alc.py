@@ -901,13 +901,14 @@ def pinvSVD(U, S, V, Y):
         W = Y @ V @ S⁻¹ @ U.T
     """
 
-    v_transpuesta = V.T #Hago transpuesta para pasarla como parametro a calcularPseudoInversa luego
 
-    V, S_inversa, U_transpuesta = calcularPseudoInversa(U, S, v_transpuesta)
+    V, S_inversa, U_transpuesta = calcularPseudoInversa(U, S, V)
 
     W = calculo_W_SVD(V, S_inversa, U_transpuesta, Y)
 
     return W
+
+
 
 
 
@@ -1097,14 +1098,14 @@ def rango(A):
     return rango
 
 
-def calcularPseudoInversa(U,S,V_transpuesta):
+def calcularPseudoInversa(U,S,V):
     """
     Entrada: Descomposicion de valores singulares de una matriz
     Retorna V,S+,U transpuesta que representa la pseudoInversa de A
     """
 
-    V = V_transpuesta.T
-    U_transpuesta = U.T
+
+    U_transpuesta = transpuesta(U)
 
     filas, columnas = S.shape
     S_inversa = np.zeros((columnas, filas))
@@ -1201,6 +1202,8 @@ def calculo_W_SVD(V,S_inversa,U_transpuesta, Y):
     W = matmulti(Y, pseudo_inv)                   # Y * (V₁ Σ₁⁻¹ U₁ᵀ)
 
     return W
+
+
 
 
 
