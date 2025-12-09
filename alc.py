@@ -1121,7 +1121,8 @@ def calcularPseudoInversa(U,S,V):
       if S[i, i] > tol:
         rango += 1
         S_inversa[i, i] = 1 / S[i, i]
-
+      else:
+        break
 
 
 
