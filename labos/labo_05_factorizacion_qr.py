@@ -1,4 +1,4 @@
-from imports import np,lb1,lb3
+from lab_imports import np,lb1,lb3
 def gen_Q(A, tol=1e-12):
     '''
     Ortonormaliza las columnas de A

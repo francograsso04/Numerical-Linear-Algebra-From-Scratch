@@ -1,4 +1,4 @@
-from imports import np,lb4
+from lab_imports import np,lb4
 # TESTS L04-LU
 
 # TESTS LU

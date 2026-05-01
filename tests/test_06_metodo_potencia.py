@@ -1,4 +1,4 @@
-from imports import np,lb6
+from lab_imports import np,lb6
 
 #### TESTEOS
 # Tests metpot2k

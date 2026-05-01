@@ -1,4 +1,4 @@
-from imports import np,lb3,lb1
+from lab_imports import np,lb3,lb1
 
 def metpot2k(A, tol=1e-15, K=1000):
     n = A.shape[0]

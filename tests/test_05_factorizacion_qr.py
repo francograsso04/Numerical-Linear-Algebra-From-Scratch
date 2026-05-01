@@ -1,4 +1,4 @@
-from imports import np,lb5
+from lab_imports import np,lb5
 # Tests L05-QR:
 
 

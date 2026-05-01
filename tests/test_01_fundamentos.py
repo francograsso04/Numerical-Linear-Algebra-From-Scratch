@@ -1,4 +1,4 @@
-from imports import np,lb1
+from lab_imports import np,lb1
 assert(not lb1.sonIguales(1, 1.1))
 assert(lb1.sonIguales(1, 1 + np.finfo('float64').eps))
 assert(not lb1.sonIguales(1, 1 + np.finfo('float32').eps))

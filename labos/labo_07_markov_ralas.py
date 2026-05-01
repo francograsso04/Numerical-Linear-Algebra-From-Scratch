@@ -1,4 +1,4 @@
-from imports import np,lb3,lb1,lb6
+from lab_imports import np,lb3,lb1,lb6
 def transiciones_al_azar_continuas(n):
     """
     n: cantidad de filas (columnas) de la matriz de transición.

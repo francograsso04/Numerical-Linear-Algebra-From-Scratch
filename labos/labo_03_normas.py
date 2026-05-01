@@ -1,4 +1,4 @@
-from imports import np
+from lab_imports import np
 def norma(unVectorASacarNorma, unValorDeNorma):
     if unValorDeNorma == 1:
         return np.sum(np.abs(unVectorASacarNorma))

@@ -1,4 +1,4 @@
-from imports import np,lb7
+from lab_imports import np,lb7
 for i in range(1,100):
     T = lb7.transiciones_al_azar_continuas(i)
     assert lb7.es_markov(T), f"transiciones_al_azar_continuas fallo para n={i}"

@@ -1,4 +1,4 @@
-from imports import np,lb3
+from lab_imports import np,lb3
 
 # Tests L03-Normas
 #from moduloALC import norma, normaliza, normaExacta, normaMatMC, condMC, condExacta

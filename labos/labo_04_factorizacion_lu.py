@@ -1,4 +1,4 @@
-from imports import np,lb1
+from lab_imports import np,lb1
 
 def calculaLU(A):
     """

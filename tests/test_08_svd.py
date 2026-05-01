@@ -1,4 +1,4 @@
-from imports import np,lb8
+from lab_imports import np,lb8
 # Matrices al azar
 def genera_matriz_para_test(m,n=2,tam_nucleo=0):
     if tam_nucleo == 0:

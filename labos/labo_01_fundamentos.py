@@ -1,4 +1,4 @@
-from imports import np
+from lab_imports import np
 
 def error(x, y):
     y64 = np.float64(y)   # convertir y a float64

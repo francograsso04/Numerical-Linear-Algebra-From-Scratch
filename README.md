@@ -20,7 +20,7 @@ Está pensado como base académica y técnica para demostrar fundamentos numéri
 ```text
 .
 ├── src/nla/                 # Módulo principal (incluye alc.py)
-├── labos/                   # Implementaciones por laboratorio (Labo1...Labo8)
+├── labos/                   # Implementaciones por laboratorio (labo_01...labo_08)
 ├── tests/                   # Suite de tests ejecutables con python -m
 ├── notebooks/               # Notebooks de experimentación
 ├── examples/                # Ejemplos de uso y scripts auxiliares
@@ -29,7 +29,7 @@ Está pensado como base académica y técnica para demostrar fundamentos numéri
 │   ├── samples/             # Imágenes simples de referencia
 │   ├── weights/W/           # Matrices precomputadas (.npy)
 │   └── datasets/            # Dataset cats_and_dogs
-└── imports.py               # Atajo de imports para laboratorio/tests
+└── lab_imports.py               # Atajo de imports para laboratorio/tests
 ```
 
 ## Requisitos
@@ -60,14 +60,14 @@ pip install -r requirements.txt
 Desde la raíz del proyecto:
 
 ```bash
-python -m tests.test1
-python -m tests.test2
-python -m tests.test3
-python -m tests.test4
-python -m tests.test5
-python -m tests.test6
-python -m tests.test7
-python -m tests.test8
+python -m tests.test_01_fundamentos
+python -m tests.test_02_transformaciones
+python -m tests.test_03_normas
+python -m tests.test_04_factorizacion_lu
+python -m tests.test_05_factorizacion_qr
+python -m tests.test_06_metodo_potencia
+python -m tests.test_07_markov_ralas
+python -m tests.test_08_svd
 ```
 
 ## Uso del módulo principal
@@ -85,7 +85,7 @@ El código fuente principal vive en:
 ## Ejemplo de embeddings de imágenes
 
 ```bash
-python examples/obtener_embeddings.py
+python examples/generate_image_embeddings.py
 ```
 
 El script utiliza imágenes locales en `examples/images/`.
